@@ -3,26 +3,38 @@ package de.vvo.glassapp
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import de.vvo.glassapp.ui.screens.HomeScreen
 import de.vvo.glassapp.ui.screens.MapScreen
-import de.vvo.glassapp.ui.theme.GlassAppTheme
+import de.vvo.glassapp.ui.theme.*
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             GlassAppTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    BackgroundGradientStart,
+                                    BackgroundGradientMiddle,
+                                    BackgroundGradientEnd
+                                )
+                            )
+                        )
                 ) {
                     AppNavigation()
                 }

@@ -1,9 +1,12 @@
 package de.vvo.glassapp.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
@@ -13,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -24,7 +28,6 @@ import de.vvo.glassapp.ui.theme.DvbYellow
 import de.vvo.glassapp.ui.viewmodel.TransitViewModel
 import de.vvo.glassapp.util.ServiceLocator
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: NavController) {
     val viewModel: TransitViewModel = remember { TransitViewModel(ServiceLocator.repository) }
@@ -36,141 +39,154 @@ fun HomeScreen(navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(20.dp)
             .statusBarsPadding()
     ) {
         Text(
             text = "DVB Glass",
-            fontSize = 32.sp,
-            fontWeight = FontWeight.Bold,
-            color = DvbYellow,
-            modifier = Modifier.padding(bottom = 16.dp)
+            fontSize = 34.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = Color.White,
+            modifier = Modifier.padding(bottom = 24.dp)
         )
 
-        // Search Bar
-        OutlinedTextField(
-            value = searchQuery,
-            onValueChange = {
-                searchQuery = it
-                if (it.length > 2) viewModel.searchStops(it)
-            },
+        // Custom Glass Search Bar
+        GlassCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 24.dp),
-            placeholder = { Text(stringResource(R.string.search_hint)) },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-            shape = MaterialTheme.shapes.extraLarge,
-            colors = TextFieldDefaults.outlinedTextFieldColors(
-                focusedBorderColor = DvbYellow,
-                unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
-            )
-        )
+            shape = RoundedCornerShape(20.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+            ) {
+                Icon(Icons.Default.Search, contentDescription = null, tint = Color.White.copy(alpha = 0.7f))
+                Spacer(modifier = Modifier.width(12.dp))
+                Box(contentAlignment = Alignment.CenterStart) {
+                    if (searchQuery.isEmpty()) {
+                        Text(
+                            text = stringResource(R.string.search_hint),
+                            color = Color.White.copy(alpha = 0.5f),
+                            fontSize = 16.sp
+                        )
+                    }
+                    BasicTextField(
+                        value = searchQuery,
+                        onValueChange = {
+                            searchQuery = it
+                            if (it.length > 2) viewModel.searchStops(it)
+                        },
+                        textStyle = TextStyle(color = Color.White, fontSize = 16.sp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        }
 
         if (searchQuery.isNotEmpty()) {
             LazyColumn(modifier = Modifier.weight(1f)) {
-                item { Text("Haltestellen", fontWeight = FontWeight.Bold, modifier = Modifier.padding(8.dp)) }
+                item {
+                    SectionHeader("Haltestellen")
+                }
                 items(searchResults) { stop ->
-                    StopSearchResultItem(stop) {
+                    GlassSearchResultItem(stop.name, stop.place ?: "Dresden") {
                         navController.navigate("map/${stop.id}")
                     }
                 }
-                item { Text("Adressen & Orte", fontWeight = FontWeight.Bold, modifier = Modifier.padding(8.dp)) }
+                item {
+                    SectionHeader("Adressen & Orte")
+                }
                 items(locationResults) { feature ->
-                    LocationSearchResultItem(feature) {
-                        // Navigate to map at these coordinates
+                    GlassSearchResultItem(feature.properties.name, feature.properties.city ?: "") {
                         navController.navigate("map")
                     }
                 }
             }
         } else {
             // Favorites Section
-            Text(
-                text = stringResource(R.string.favorites),
-                fontSize = 20.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
+            SectionHeader(stringResource(R.string.favorites))
 
             LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.padding(bottom = 24.dp)
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.padding(bottom = 28.dp)
             ) {
                 items(sampleFavorites) { favorite ->
                     FavoriteItem(favorite) {
-                        // Search for connections from Dresden Hbf (mock current location) to favorite
                         viewModel.findTrips("33000028", favorite.stopId)
                     }
                 }
             }
 
             if (trips.isNotEmpty()) {
-                Text(
-                    text = stringResource(R.string.connections),
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(bottom = 12.dp)
-                )
-                LazyColumn(modifier = Modifier.height(200.dp)) {
+                SectionHeader(stringResource(R.string.connections))
+                LazyColumn(modifier = Modifier.weight(1f)) {
                     items(trips) { trip ->
                         TripItem(trip)
                     }
                 }
-            }
-
-            // Nearby Departures
-            Text(
-                text = stringResource(R.string.departures),
-                fontSize = 20.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-
-            // Placeholder for departures from current location or default stop
-            GlassCard(modifier = Modifier.fillMaxWidth().height(200.dp)) {
-                Text("Lade Abfahrten in der Nähe...", modifier = Modifier.align(Alignment.Center))
+            } else {
+                Spacer(modifier = Modifier.weight(1f))
             }
         }
-
-        Spacer(modifier = Modifier.weight(1f))
 
         Button(
             onClick = { navController.navigate("map") },
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = DvbYellow)
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+                .padding(bottom = 8.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = DvbYellow),
+            shape = RoundedCornerShape(16.dp)
         ) {
-            Text("Zur Karte", color = Color.Black)
+            Text("Zur Karte", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 18.sp)
         }
     }
 }
 
 @Composable
-fun LocationSearchResultItem(feature: de.vvo.glassapp.data.model.PhotonFeature, onClick: () -> Unit) {
-    Card(
-        onClick = onClick,
+fun SectionHeader(title: String) {
+    Text(
+        text = title,
+        fontSize = 22.sp,
+        fontWeight = FontWeight.Bold,
+        color = Color.White,
+        modifier = Modifier.padding(bottom = 14.dp, top = 8.dp)
+    )
+}
+
+@Composable
+fun GlassSearchResultItem(title: String, subtitle: String, onClick: () -> Unit) {
+    GlassCard(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+            .padding(vertical = 6.dp)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = feature.properties.name, fontWeight = FontWeight.Bold)
-            Text(text = "${feature.properties.city ?: ""}, ${feature.properties.street ?: ""}", fontSize = 12.sp, color = Color.Gray)
+        Column {
+            Text(text = title, fontWeight = FontWeight.Bold, color = Color.White)
+            Text(text = subtitle, fontSize = 13.sp, color = Color.White.copy(alpha = 0.7f))
         }
     }
 }
 
 @Composable
-fun StopSearchResultItem(stop: Stop, onClick: () -> Unit) {
-    Card(
-        onClick = onClick,
+fun FavoriteItem(favorite: Favorite, onClick: () -> Unit) {
+    GlassCard(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+            .size(110.dp)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(22.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = stop.name, fontWeight = FontWeight.Bold)
-            Text(text = stop.place ?: "Dresden", fontSize = 12.sp, color = Color.Gray)
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Icon(Icons.Default.Star, contentDescription = null, tint = DvbYellow, modifier = Modifier.size(32.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = favorite.name, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
         }
     }
 }
@@ -180,36 +196,19 @@ fun TripItem(trip: de.vvo.glassapp.data.model.Trip) {
     GlassCard(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp)
+            .padding(vertical = 6.dp),
+        shape = RoundedCornerShape(16.dp)
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column {
-                Text(text = "${trip.departureTime} - ${trip.arrivalTime}", fontWeight = FontWeight.Bold)
-                Text(text = "Dauer: ${trip.duration} min", fontSize = 12.sp)
+                Text(text = "${trip.departureTime} - ${trip.arrivalTime}", fontWeight = FontWeight.Bold, color = Color.White)
+                Text(text = "Dauer: ${trip.duration} min", fontSize = 13.sp, color = Color.White.copy(alpha = 0.7f))
             }
-            Text(text = "${trip.interchanges} Umstiege", fontSize = 12.sp)
-        }
-    }
-}
-
-@Composable
-fun FavoriteItem(favorite: Favorite, onClick: () -> Unit) {
-    GlassCard(
-        modifier = Modifier
-            .size(100.dp)
-            .padding(4.dp)
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-            modifier = Modifier.fillMaxSize()
-        ) {
-            Icon(Icons.Default.Star, contentDescription = null, tint = DvbYellow)
-            Text(text = favorite.name, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+            Text(text = "${trip.interchanges} Umstiege", fontSize = 13.sp, color = DvbYellow, fontWeight = FontWeight.Bold)
         }
     }
 }

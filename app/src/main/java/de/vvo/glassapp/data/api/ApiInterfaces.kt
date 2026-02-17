@@ -8,7 +8,8 @@ interface VvoApi {
     @GET("stopsearch/stop")
     suspend fun searchStop(
         @Query("query") query: String,
-        @Query("stopsOnly") stopsOnly: Boolean = true
+        @Query("stopsOnly") stopsOnly: Boolean = true,
+        @Query("dvbOnly") dvbOnly: Boolean = true
     ): StopSearchResponse
 
     @GET("dm")
@@ -23,7 +24,8 @@ interface VvoApi {
         @Query("swlat") swLat: Double,
         @Query("swlon") swLon: Double,
         @Query("nelat") neLat: Double,
-        @Query("nelon") neLon: Double
+        @Query("nelon") neLon: Double,
+        @Query("showtrips") showTrips: Boolean = true
     ): MapPinsResponse
 
     @GET("map/route")
@@ -44,8 +46,9 @@ interface PhotonApi {
     @GET("api/")
     suspend fun search(
         @Query("q") query: String,
-        @Query("lat") lat: Double? = 51.0509, // Dresden
+        @Query("lat") lat: Double? = 51.0509,
         @Query("lon") lon: Double? = 13.7373,
-        @Query("lang") lang: String = "de"
+        @Query("lang") lang: String = "de",
+        @Query("bbox") bbox: String = "13.5,50.9,14.0,51.2" // Bound to Dresden area
     ): PhotonResponse
 }

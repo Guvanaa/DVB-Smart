@@ -1,6 +1,9 @@
 package de.vvo.glassapp.ui.screens
 
+import android.Manifest
 import android.graphics.Color as AndroidColor
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -21,6 +24,8 @@ import com.mapbox.mapboxsdk.camera.CameraPosition
 import com.mapbox.mapboxsdk.geometry.LatLng
 import com.mapbox.mapboxsdk.maps.MapView
 import com.mapbox.mapboxsdk.maps.Style
+import com.mapbox.mapboxsdk.plugins.annotation.LineManager
+import com.mapbox.mapboxsdk.plugins.annotation.LineOptions
 import com.mapbox.mapboxsdk.plugins.annotation.SymbolManager
 import com.mapbox.mapboxsdk.plugins.annotation.SymbolOptions
 import de.vvo.glassapp.R
@@ -36,43 +41,74 @@ import kotlinx.coroutines.delay
 fun MapScreen(navController: NavController, stopId: String? = null) {
     val context = LocalContext.current
     val viewModel: TransitViewModel = remember { TransitViewModel(ServiceLocator.repository) }
-    val mapView = remember { MapView(context) }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { }
+
+    LaunchedEffect(Unit) {
+        permissionLauncher.launch(arrayOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        ))
+    }
+
     var symbolManager by remember { mutableStateOf<SymbolManager?>(null) }
+    var lineManager by remember { mutableStateOf<LineManager?>(null) }
 
     val pins by viewModel.mapPins.collectAsState()
     val selectedVehicle by viewModel.selectedVehicle.collectAsState()
     val routeStops by viewModel.selectedVehicleRoute.collectAsState()
 
     LaunchedEffect(Unit) {
-        Mapbox.getInstance(context, null)
+        try {
+            Mapbox.getInstance(context, null)
+        } catch (e: Exception) { }
+
         while(true) {
-            // Simplified bounding box for Dresden
             viewModel.loadMapPins(51.0, 13.6, 51.1, 13.9)
-            delay(15000)
+            delay(10000)
         }
     }
 
-    // Update symbols when pins change
+    // Update symbols
     LaunchedEffect(pins, symbolManager) {
         symbolManager?.let { manager ->
-            manager.deleteAll()
-            pins.forEach { pin ->
-                val punctualityColor = when {
-                    (pin.punctuality ?: 0) < 0 -> "#4CAF50" // Early (Green)
-                    (pin.punctuality ?: 0) == 0 -> "#FFCC00" // Punctual (DVB Yellow)
-                    else -> "#F44336" // Delayed (Red)
+            try {
+                manager.deleteAll()
+                pins.forEach { pin ->
+                    val color = when {
+                        (pin.punctuality ?: 0) < 0 -> "#4CAF50"
+                        (pin.punctuality ?: 0) == 0 -> "#FFCC00"
+                        else -> "#F44336"
+                    }
+                    manager.create(SymbolOptions()
+                        .withLatLng(LatLng(pin.lat, pin.lon))
+                        .withTextField(pin.line)
+                        .withTextSize(13f)
+                        .withTextColor(AndroidColor.BLACK)
+                        .withTextHaloColor("white")
+                        .withTextHaloWidth(1.5f)
+                        .withIconImage("marker-15")
+                        .withIconColor(color)
+                        .withData(com.google.gson.JsonPrimitive(pin.id))
+                    )
                 }
+            } catch (e: Exception) { }
+        }
+    }
 
-                manager.create(SymbolOptions()
-                    .withLatLng(LatLng(pin.lat, pin.lon))
-                    .withTextField(pin.line)
-                    .withTextSize(12f)
-                    .withTextColor(AndroidColor.BLACK)
-                    .withTextHaloColor("white")
-                    .withTextHaloWidth(1f)
-                    .withIconImage("circle-15") // Standard Mapbox icon
-                    .withIconColor(punctualityColor)
-                    .withData(com.google.gson.JsonPrimitive(pin.id))
+    // Update route line
+    LaunchedEffect(routeStops, lineManager) {
+        lineManager?.let { manager ->
+            manager.deleteAll()
+            if (routeStops.isNotEmpty()) {
+                val points = routeStops.map { LatLng(it.lat, it.lon) }
+                manager.create(LineOptions()
+                    .withLatLngs(points)
+                    .withLineColor("#FFCC00")
+                    .withLineWidth(4f)
+                    .withLineOpacity(0.8f)
                 )
             }
         }
@@ -80,24 +116,22 @@ fun MapScreen(navController: NavController, stopId: String? = null) {
 
     Box(modifier = Modifier.fillMaxSize()) {
         AndroidView(
-            factory = { mapView },
-            modifier = Modifier.fillMaxSize(),
-            update = { mv ->
-                mv.getMapAsync { mapboxMap ->
-                    if (mapboxMap.style == null) {
-                        mapboxMap.setStyle(Style.MAPBOX_STREETS) { style ->
-                            val manager = SymbolManager(mv, mapboxMap, style)
-                            manager.iconAllowOverlap = true
-                            manager.textAllowOverlap = true
-                            manager.addClickListener { symbol ->
-                                val vehicleId = symbol.data?.asString
-                                val vehicle = pins.find { it.id == vehicleId }
-                                if (vehicle != null) {
-                                    viewModel.selectVehicle(vehicle)
+            factory = {
+                MapView(context).apply {
+                    onCreate(null)
+                    getMapAsync { mapboxMap ->
+                        val styleUrl = "https://demotiles.maplibre.org/style.json"
+                        mapboxMap.setStyle(styleUrl) { style ->
+                            symbolManager = SymbolManager(this, mapboxMap, style).apply {
+                                iconAllowOverlap = true
+                                textAllowOverlap = true
+                                addClickListener { symbol ->
+                                    val vehicleId = symbol.data?.asString
+                                    pins.find { it.id == vehicleId }?.let { viewModel.selectVehicle(it) }
+                                    true
                                 }
-                                true
                             }
-                            symbolManager = manager
+                            lineManager = LineManager(this, mapboxMap, style)
                         }
                         mapboxMap.cameraPosition = CameraPosition.Builder()
                             .target(LatLng(51.0509, 13.7373))
@@ -105,60 +139,39 @@ fun MapScreen(navController: NavController, stopId: String? = null) {
                             .build()
                     }
                 }
-            }
+            },
+            modifier = Modifier.fillMaxSize()
         )
 
-        // Overlay UI
         IconButton(
             onClick = { navController.popBackStack() },
-            modifier = Modifier
-                .padding(16.dp)
-                .statusBarsPadding()
-                .align(Alignment.TopStart)
+            modifier = Modifier.padding(20.dp).statusBarsPadding().align(Alignment.TopStart)
         ) {
-            GlassCard(modifier = Modifier.size(48.dp)) {
-                Icon(Icons.Default.ArrowBack, contentDescription = null, tint = Color.Black)
+            GlassCard(modifier = Modifier.size(52.dp)) {
+                Icon(Icons.Default.ArrowBack, contentDescription = null, tint = Color.White)
             }
         }
 
-        // Selected Vehicle Info & Thermometer
         if (selectedVehicle != null) {
             Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(16.dp)
-                    .navigationBarsPadding()
+                modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(16.dp).navigationBarsPadding()
             ) {
-                RouteDetailSheet(
-                    stops = routeStops,
-                    onStopClick = { /* Show transfers? */ }
-                )
-            }
-
-            // Close button for selected vehicle
-            IconButton(
-                onClick = { viewModel.deselectVehicle() },
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(16.dp)
-                    .statusBarsPadding()
-            ) {
-                GlassCard(modifier = Modifier.size(32.dp)) {
-                    Text("X", fontWeight = FontWeight.Bold)
+                RouteDetailSheet(stops = routeStops, onStopClick = { })
+                IconButton(
+                    onClick = { viewModel.deselectVehicle() },
+                    modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
+                ) {
+                    Text("✕", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 20.sp)
                 }
             }
         } else {
-            // General info
             Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(16.dp)
-                    .navigationBarsPadding()
+                modifier = Modifier.align(Alignment.BottomCenter).padding(24.dp).navigationBarsPadding()
             ) {
-                GlassCard(modifier = Modifier.fillMaxWidth().height(80.dp)) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(stringResource(R.string.live_traffic), fontWeight = FontWeight.Bold)
-                        Text(stringResource(R.string.vehicles_nearby, pins.size), fontSize = 12.sp)
+                GlassCard(modifier = Modifier.fillMaxWidth().height(90.dp)) {
+                    Column(modifier = Modifier.padding(8.dp)) {
+                        Text(stringResource(R.string.live_traffic), fontWeight = FontWeight.ExtraBold, color = Color.White, fontSize = 18.sp)
+                        Text(stringResource(R.string.vehicles_nearby, pins.size), color = Color.White.copy(alpha = 0.8f))
                     }
                 }
             }

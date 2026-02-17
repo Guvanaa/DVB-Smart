@@ -1,20 +1,22 @@
 package de.vvo.glassapp.ui.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import de.vvo.glassapp.data.model.Departure
-import de.vvo.glassapp.data.model.Stop
+import de.vvo.glassapp.data.model.*
 import de.vvo.glassapp.data.repository.TransitRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class TransitViewModel(private val repository: TransitRepository) : ViewModel() {
+    private val TAG = "TransitViewModel"
+
     private val _searchResults = MutableStateFlow<List<Stop>>(emptyList())
     val searchResults: StateFlow<List<Stop>> = _searchResults
 
-    private val _locationResults = MutableStateFlow<List<de.vvo.glassapp.data.model.PhotonFeature>>(emptyList())
-    val locationResults: StateFlow<List<de.vvo.glassapp.data.model.PhotonFeature>> = _locationResults
+    private val _locationResults = MutableStateFlow<List<PhotonFeature>>(emptyList())
+    val locationResults: StateFlow<List<PhotonFeature>> = _locationResults
 
     private val _departures = MutableStateFlow<List<Departure>>(emptyList())
     val departures: StateFlow<List<Departure>> = _departures
@@ -35,20 +37,10 @@ class TransitViewModel(private val repository: TransitRepository) : ViewModel() 
         viewModelScope.launch {
             try {
                 _searchResults.value = repository.searchStops(query)
-                // Also search for locations to satisfy POI/Address requirement
                 _locationResults.value = repository.searchLocations(query)
             } catch (e: Exception) {
-                // Handle error
-            }
-        }
-    }
-
-    fun loadDepartures(stopId: String) {
-        viewModelScope.launch {
-            try {
-                _departures.value = repository.getDepartures(stopId)
-            } catch (e: Exception) {
-                // Handle error
+                Log.e(TAG, "Search failed", e)
+                _searchResults.value = emptyList()
             }
         }
     }
@@ -56,20 +48,22 @@ class TransitViewModel(private val repository: TransitRepository) : ViewModel() 
     fun loadMapPins(swLat: Double, swLon: Double, neLat: Double, neLon: Double) {
         viewModelScope.launch {
             try {
-                _mapPins.value = repository.getMapPins(swLat, swLon, neLat, neLon)
+                val pins = repository.getMapPins(swLat, swLon, neLat, neLon)
+                _mapPins.value = pins
             } catch (e: Exception) {
-                // Handle error
+                Log.e(TAG, "Map pins load failed", e)
             }
         }
     }
 
     fun selectVehicle(vehicle: VehiclePin) {
         _selectedVehicle.value = vehicle
+        _selectedVehicleRoute.value = emptyList()
         viewModelScope.launch {
             try {
                 _selectedVehicleRoute.value = repository.getRoute(vehicle.id)
             } catch (e: Exception) {
-                // Handle error
+                Log.e(TAG, "Route load failed", e)
             }
         }
     }
@@ -84,7 +78,8 @@ class TransitViewModel(private val repository: TransitRepository) : ViewModel() 
             try {
                 _trips.value = repository.getTrips(originId, destinationId)
             } catch (e: Exception) {
-                // Handle error
+                Log.e(TAG, "Trip search failed", e)
+                _trips.value = emptyList()
             }
         }
     }
