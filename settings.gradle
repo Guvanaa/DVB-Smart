@@ -1,0 +1,2 @@
+rootProject.name = "DVB-Glass-App"
+include ':app'

@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">DVB Glass</string>
+    <string name="search_hint">Haltestelle oder Adresse suchen…</string>
+    <string name="favorites">Favoriten</string>
+    <string name="departures">Abfahrten</string>
+    <string name="connections">Verbindungen</string>
+    <string name="map">Karte</string>
+    <string name="settings">Einstellungen</string>
+    <string name="back">Zurück</string>
+    <string name="live_traffic">Live-Verkehr Dresden</string>
+    <string name="vehicles_nearby">%1$d Fahrzeuge in deiner Nähe</string>
+    <string name="route_gradient">Linienverlauf</string>
+    <string name="punctual">pünktlich</string>
+    <string name="loading_departures">Lade Abfahrten in der Nähe...</string>
+    <string name="to_map">Zur Karte</string>
+</resources>
