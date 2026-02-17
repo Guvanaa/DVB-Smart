@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">DVB Glass</string>
+    <string name="app_name">DVB-Smart</string>
     <string name="search_hint">Haltestelle oder Adresse suchen…</string>
     <string name="favorites">Favoriten</string>
     <string name="departures">Abfahrten</string>
