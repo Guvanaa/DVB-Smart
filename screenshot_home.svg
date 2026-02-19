@@ -1,0 +1,45 @@
+<svg width="400" height="800" viewBox="0 0 400 800" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Gradient -->
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#1A2A6C;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#B21F1F;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FDBB2D;stop-opacity:1" />
+    </linearGradient>
+    <filter id="blur">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="5" />
+    </filter>
+  </defs>
+  <rect width="400" height="800" fill="url(#bg)" />
+
+  <!-- Status Bar -->
+  <text x="20" y="30" fill="white" font-family="sans-serif" font-size="12">9:41</text>
+
+  <!-- Title -->
+  <text x="20" y="100" fill="white" font-family="sans-serif" font-weight="900" font-size="34">DVB-Smart</text>
+
+  <!-- Search Bar Glass -->
+  <rect x="20" y="140" width="360" height="50" rx="15" fill="white" fill-opacity="0.2" stroke="white" stroke-opacity="0.3" stroke-width="1.5" />
+  <text x="60" y="172" fill="white" fill-opacity="0.6" font-family="sans-serif" font-size="16">Haltestelle suchen...</text>
+
+  <!-- Favorites Section -->
+  <text x="20" y="240" fill="white" font-family="sans-serif" font-weight="bold" font-size="22">Favoriten</text>
+
+  <rect x="20" y="260" width="100" height="100" rx="20" fill="white" fill-opacity="0.2" stroke="white" stroke-opacity="0.3" />
+  <text x="70" y="340" fill="white" font-family="sans-serif" font-size="12" text-anchor="middle">Arbeit</text>
+
+  <rect x="135" y="260" width="100" height="100" rx="20" fill="white" fill-opacity="0.2" stroke="white" stroke-opacity="0.3" />
+  <text x="185" y="340" fill="white" font-family="sans-serif" font-size="12" text-anchor="middle">Zuhause</text>
+
+  <!-- Connections -->
+  <text x="20" y="420" fill="white" font-family="sans-serif" font-weight="bold" font-size="22">Verbindungen</text>
+
+  <rect x="20" y="440" width="360" height="70" rx="15" fill="white" fill-opacity="0.2" stroke="white" stroke-opacity="0.3" />
+  <text x="40" y="475" fill="white" font-family="sans-serif" font-weight="bold">08:15 - 08:42</text>
+  <text x="40" y="495" fill="white" fill-opacity="0.7" font-family="sans-serif" font-size="12">Dauer: 27 min</text>
+  <text x="360" y="485" fill="#FFCC00" font-family="sans-serif" font-weight="bold" text-anchor="end">0 Umstiege</text>
+
+  <!-- Button -->
+  <rect x="20" y="720" width="360" height="56" rx="16" fill="#FFCC00" />
+  <text x="200" y="755" fill="black" font-family="sans-serif" font-weight="bold" font-size="18" text-anchor="middle">Zur Karte</text>
+</svg>

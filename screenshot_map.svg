@@ -1,0 +1,37 @@
+<svg width="400" height="800" viewBox="0 0 400 800" xmlns="http://www.w3.org/2000/svg">
+  <!-- Map Mockup -->
+  <rect width="400" height="800" fill="#e0e0e0" />
+  <path d="M0,400 Q200,380 400,420" stroke="#bdbdbd" stroke-width="20" fill="none" />
+  <path d="M200,0 Q220,400 180,800" stroke="#bdbdbd" stroke-width="15" fill="none" />
+
+  <!-- Route Line -->
+  <path d="M50,100 L150,300 L300,500 L350,700" stroke="#FFCC00" stroke-width="5" fill="none" stroke-opacity="0.8" />
+
+  <!-- Vehicle Pins -->
+  <circle cx="150" cy="300" r="15" fill="#FFCC00" />
+  <text x="150" y="305" fill="black" font-family="sans-serif" font-weight="bold" font-size="10" text-anchor="middle">3</text>
+
+  <circle cx="250" cy="150" r="15" fill="#4CAF50" />
+  <text x="250" y="155" fill="black" font-family="sans-serif" font-weight="bold" font-size="10" text-anchor="middle">63</text>
+
+  <circle cx="100" cy="600" r="15" fill="#F44336" />
+  <text x="100" y="605" fill="black" font-family="sans-serif" font-weight="bold" font-size="10" text-anchor="middle">7</text>
+
+  <!-- Route Sheet Glass -->
+  <rect x="10" y="450" width="380" height="340" rx="30" fill="#111" fill-opacity="0.6" stroke="white" stroke-opacity="0.2" />
+  <text x="30" y="490" fill="white" font-family="sans-serif" font-weight="900" font-size="24">Linienverlauf</text>
+
+  <!-- Thermometer -->
+  <line x1="45" y1="520" x2="45" y2="750" stroke="white" stroke-opacity="0.3" stroke-width="3" />
+
+  <circle cx="45" cy="530" r="7" fill="#FFCC00" />
+  <text x="70" y="535" fill="white" font-family="sans-serif" font-weight="bold">Pirnaischer Platz</text>
+
+  <circle cx="45" cy="580" r="7" fill="#FFCC00" />
+  <text x="70" y="585" fill="white" font-family="sans-serif" font-weight="bold">Postplatz</text>
+  <text x="370" y="585" fill="#FFCC00" font-family="sans-serif" font-weight="bold" text-anchor="end">pünktlich</text>
+
+  <!-- Back Button -->
+  <rect x="20" y="50" width="50" height="50" rx="15" fill="white" fill-opacity="0.3" stroke="white" stroke-opacity="0.4" />
+  <path d="M45,65 L35,75 L45,85" stroke="white" stroke-width="3" fill="none" />
+</svg>
