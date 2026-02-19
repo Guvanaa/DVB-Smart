@@ -7,6 +7,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,15 +20,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavController
-import org.maplibre.android.MapLibre
-import org.maplibre.android.camera.CameraPosition
-import org.maplibre.android.geometry.LatLng
-import org.maplibre.android.maps.MapView
-import org.maplibre.android.maps.Style
-import org.maplibre.android.plugins.annotation.LineManager
-import org.maplibre.android.plugins.annotation.LineOptions
-import org.maplibre.android.plugins.annotation.SymbolManager
-import org.maplibre.android.plugins.annotation.SymbolOptions
+import com.mapbox.mapboxsdk.Mapbox
+import com.mapbox.mapboxsdk.camera.CameraPosition
+import com.mapbox.mapboxsdk.geometry.LatLng
+import com.mapbox.mapboxsdk.maps.MapView
+import com.mapbox.mapboxsdk.maps.Style
+import com.mapbox.mapboxsdk.plugins.annotation.LineManager
+import com.mapbox.mapboxsdk.plugins.annotation.LineOptions
+import com.mapbox.mapboxsdk.plugins.annotation.SymbolManager
+import com.mapbox.mapboxsdk.plugins.annotation.SymbolOptions
 import de.vvo.glassapp.R
 import de.vvo.glassapp.data.model.VehiclePin
 import de.vvo.glassapp.ui.components.GlassCard
@@ -38,7 +39,12 @@ import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MapScreen(navController: NavController, stopId: String? = null) {
+fun MapScreen(
+    navController: NavController,
+    stopId: String? = null,
+    lat: Double? = null,
+    lon: Double? = null
+) {
     val context = LocalContext.current
     val viewModel: TransitViewModel = remember { TransitViewModel(ServiceLocator.repository) }
 
@@ -62,7 +68,7 @@ fun MapScreen(navController: NavController, stopId: String? = null) {
 
     LaunchedEffect(Unit) {
         try {
-            MapLibre.getInstance(context, null)
+            Mapbox.getInstance(context)
         } catch (e: Exception) { }
 
         while(true) {
@@ -82,14 +88,20 @@ fun MapScreen(navController: NavController, stopId: String? = null) {
                         (pin.punctuality ?: 0) == 0 -> "#FFCC00"
                         else -> "#F44336"
                     }
+                    val icon = when (pin.type) {
+                        "Tram" -> "tram"
+                        "CityBus", "Bus" -> "bus"
+                        "SuburbanRailway", "Train" -> "rail"
+                        else -> "marker-15"
+                    }
                     manager.create(SymbolOptions()
                         .withLatLng(LatLng(pin.lat, pin.lon))
                         .withTextField(pin.line)
-                        .withTextSize(13f)
-                        .withTextColor(AndroidColor.BLACK)
-                        .withTextHaloColor("white")
-                        .withTextHaloWidth(1.5f)
-                        .withIconImage("marker-15")
+                        .withTextSize(11f)
+                        .withTextColor("#000000")
+                        .withTextHaloColor("#FFFFFF")
+                        .withTextHaloWidth(2.0f)
+                        .withIconImage(icon)
                         .withIconColor(color)
                         .withData(com.google.gson.JsonPrimitive(pin.id))
                     )
@@ -133,9 +145,15 @@ fun MapScreen(navController: NavController, stopId: String? = null) {
                             }
                             lineManager = LineManager(this, mapboxMap, style)
                         }
+                        val target = if (lat != null && lon != null) {
+                            LatLng(lat, lon)
+                        } else {
+                            LatLng(51.0509, 13.7373)
+                        }
+
                         mapboxMap.cameraPosition = CameraPosition.Builder()
-                            .target(LatLng(51.0509, 13.7373))
-                            .zoom(13.0)
+                            .target(target)
+                            .zoom(if (lat != null) 15.0 else 13.0)
                             .build()
                     }
                 }
@@ -149,6 +167,21 @@ fun MapScreen(navController: NavController, stopId: String? = null) {
         ) {
             GlassCard(modifier = Modifier.size(52.dp)) {
                 Icon(Icons.Default.ArrowBack, contentDescription = null, tint = Color.White)
+            }
+        }
+
+        IconButton(
+            onClick = {
+                // In a real app, we would animate to user location
+            },
+            modifier = Modifier.padding(20.dp).statusBarsPadding().align(Alignment.TopEnd)
+        ) {
+            GlassCard(modifier = Modifier.size(52.dp)) {
+                Icon(
+                    imageVector = Icons.Default.MyLocation,
+                    contentDescription = "Locate Me",
+                    tint = Color.White
+                )
             }
         }
 

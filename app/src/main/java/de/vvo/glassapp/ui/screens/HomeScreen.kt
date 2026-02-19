@@ -100,7 +100,12 @@ fun HomeScreen(navController: NavController) {
                 }
                 items(locationResults) { feature ->
                     GlassSearchResultItem(feature.properties.name, feature.properties.city ?: "") {
-                        navController.navigate("map")
+                        val coords = feature.geometry.coordinates
+                        if (coords.size >= 2) {
+                            navController.navigate("map/${coords[1]}/${coords[0]}")
+                        } else {
+                            navController.navigate("map")
+                        }
                     }
                 }
             }

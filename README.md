@@ -5,7 +5,8 @@ DVB-Smart is a high-end public transportation app for the Dresden (VVO) area, fe
 ## Features
 
 - **Apple Liquid Glass Design**: Sophisticated glassmorphism effects with frosted glass cards, vibrant gradients, and smooth animations.
-- **Live Vehicle Map**: Track buses and trams across Dresden in real-time.
+- **Live Vehicle Map**: Track buses and trams across Dresden in real-time with mode-specific icons (Bus, Tram, Train).
+- **Home Screen Widget**: Quick access to your favorite connections directly from your home screen.
 - **Punctuality Indicators**:
     - 🟢 **Green**: Early
     - 🟡 **Yellow**: On-time (DVB Yellow)

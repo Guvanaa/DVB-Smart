@@ -53,5 +53,10 @@ fun AppNavigation() {
             val stopId = backStackEntry.arguments?.getString("stopId")
             MapScreen(navController, stopId)
         }
+        composable("map/{lat}/{lon}") { backStackEntry ->
+            val lat = backStackEntry.arguments?.getString("lat")?.toDoubleOrNull()
+            val lon = backStackEntry.arguments?.getString("lon")?.toDoubleOrNull()
+            MapScreen(navController, lat = lat, lon = lon)
+        }
     }
 }

@@ -3,21 +3,16 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-
     <path
-        android:fillColor="#FFCC00"
-        android:pathData="M15,15h78v78h-78z" />
-
-    <!-- Minimalist stripes group -->
-    <group android:translateX="34" android:translateY="30">
-        <path
-            android:fillColor="#000000"
-            android:pathData="M0,4h8c2.2,0 4,1.8 4,4v28c0,2.2 -1.8,4 -4,4h-8c-2.2,0 -4,-1.8 -4,-4v-28c0,-2.2 1.8,-4 4,-4z" />
-        <path
-            android:fillColor="#000000"
-            android:pathData="M14,0h8c2.2,0 4,1.8 4,4v36c0,2.2 -1.8,4 -4,4h-8c-2.2,0 -4,-1.8 -4,-4v-36c0,-2.2 1.8,-4 4,-4z" />
-        <path
-            android:fillColor="#000000"
-            android:pathData="M28,4h8c2.2,0 4,1.8 4,4v28c0,2.2 -1.8,4 -4,4h-8c-2.2,0 -4,-1.8 -4,-4v-28c0,-2.2 1.8,-4 4,-4z" />
-    </group>
+        android:pathData="M13,13h82v82h-82z"
+        android:fillColor="#5E5CE6"/>
+    <path
+        android:pathData="M27,27h54v54h-54z"
+        android:fillColor="#ffffff"
+        android:fillAlpha="0.2"/>
+    <path
+        android:pathData="M54,54m-19,0a19,19 0,1 1,38 0a19,19 0,1 1,-38 0"
+        android:strokeColor="#ffffff"
+        android:strokeWidth="4"
+        android:strokeAlpha="0.8"/>
 </vector>
