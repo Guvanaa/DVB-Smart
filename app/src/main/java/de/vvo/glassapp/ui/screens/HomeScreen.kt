@@ -35,6 +35,7 @@ fun HomeScreen(navController: NavController) {
     val searchResults by viewModel.searchResults.collectAsState()
     val locationResults by viewModel.locationResults.collectAsState()
     val trips by viewModel.trips.collectAsState()
+    val favorites by viewModel.favorites.collectAsState()
 
     Column(
         modifier = Modifier
@@ -111,7 +112,7 @@ fun HomeScreen(navController: NavController) {
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.padding(bottom = 28.dp)
             ) {
-                items(sampleFavorites) { favorite ->
+                items(favorites) { favorite ->
                     FavoriteItem(favorite) {
                         viewModel.findTrips("33000028", favorite.stopId)
                     }
@@ -172,7 +173,7 @@ fun GlassSearchResultItem(title: String, subtitle: String, onClick: () -> Unit) 
 }
 
 @Composable
-fun FavoriteItem(favorite: Favorite, onClick: () -> Unit) {
+fun FavoriteItem(favorite: de.vvo.glassapp.ui.viewmodel.Favorite, onClick: () -> Unit) {
     GlassCard(
         modifier = Modifier
             .size(110.dp)
@@ -212,10 +213,3 @@ fun TripItem(trip: de.vvo.glassapp.data.model.Trip) {
         }
     }
 }
-
-data class Favorite(val name: String, val stopId: String)
-val sampleFavorites = listOf(
-    Favorite("Arbeit", "33000028"),
-    Favorite("Zuhause", "33000037"),
-    Favorite("Hbf", "33000028")
-)

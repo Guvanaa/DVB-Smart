@@ -18,11 +18,9 @@ DVB-Smart is a high-end public transportation app for the Dresden (VVO) area, fe
 
 ## Screenshots
 
-| Home Screen | Live Map & Route |
-|:---:|:---:|
-| <img src="screenshot_home.svg" width="250"> | <img src="screenshot_map.svg" width="250"> |
+![DVB-Smart Preview](app/screenshots/preview.png)
 
-*(Mockups representing the Liquid Glass design language)*
+*The high-fidelity Liquid Glass design with live map tracking and connection search.*
 
 ## Built With
 

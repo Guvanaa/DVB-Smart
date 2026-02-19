@@ -5,7 +5,7 @@ import retrofit2.http.GET
 import retrofit2.http.Query
 
 interface VvoApi {
-    @GET("stopsearch/stop")
+    @GET("st/find")
     suspend fun searchStop(
         @Query("query") query: String,
         @Query("stopsOnly") stopsOnly: Boolean = true,

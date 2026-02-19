@@ -9,8 +9,17 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
+data class Favorite(val name: String, val stopId: String)
+
 class TransitViewModel(private val repository: TransitRepository) : ViewModel() {
     private val TAG = "TransitViewModel"
+
+    private val _favorites = MutableStateFlow<List<Favorite>>(listOf(
+        Favorite("Arbeit", "33000028"),
+        Favorite("Zuhause", "33000037"),
+        Favorite("Hbf", "33000028")
+    ))
+    val favorites: StateFlow<List<Favorite>> = _favorites
 
     private val _searchResults = MutableStateFlow<List<Stop>>(emptyList())
     val searchResults: StateFlow<List<Stop>> = _searchResults
