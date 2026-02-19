@@ -1,4 +1,4 @@
-# DVB-Smart
+# <img src="logo.svg" width="48" height="48" valign="middle"> DVB-Smart
 
 DVB-Smart is a high-end public transportation app for the Dresden (VVO) area, featuring a modern **Apple-inspired Liquid Glass (Glassmorphism)** design. It provides real-time vehicle tracking, route information, and connection search with a focus on user experience and aesthetics.
 

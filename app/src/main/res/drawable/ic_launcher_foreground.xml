@@ -5,15 +5,8 @@
     android:viewportHeight="108">
     <path
         android:fillColor="#FFCC00"
-        android:pathData="M0,0h108v108h-108z" />
+        android:pathData="M15,15h78v78h-78z" />
     <path
         android:fillColor="#000000"
-        android:pathData="M30,30h48v48h-48z" />
-    <path
-        android:fillColor="#FFCC00"
-        android:pathData="M35,35h38v38h-38z" />
-    <!-- A simple 'S' shape for Smart -->
-    <path
-        android:fillColor="#000000"
-        android:pathData="M45,45h15v5h-15v10h15v5h-20v-25h20v5h-15z" />
+        android:pathData="M40,35h20v5h-15v10h10v5h-10v10h15v5h-20v-35z" />
 </vector>
