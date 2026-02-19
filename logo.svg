@@ -1,18 +1,14 @@
 <svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-  <!-- Apple-like Rounded Background -->
+  <!-- Modern Apple-style Rounded Rectangle -->
   <rect width="100" height="100" rx="22" fill="#FFCC00"/>
 
-  <!-- Minimalist DVB Elements -->
-  <g transform="translate(15, 25)">
-    <!-- Heraldic Stripes (Simplified) -->
-    <rect x="0" y="5" width="6" height="40" fill="black"/>
-    <rect x="10" y="0" width="6" height="45" fill="black"/>
-    <rect x="20" y="5" width="6" height="40" fill="black"/>
-
-    <!-- Bold "DVB" Text (Simplified/Stylized) -->
-    <text x="32" y="38" font-family="sans-serif" font-weight="900" font-style="italic" font-size="28" fill="black">DVB</text>
+  <!-- Minimalist Stripes - Representing the DVB lion stripes/tracks -->
+  <g transform="translate(32, 28)">
+    <rect x="0" y="4" width="8" height="36" rx="4" fill="black"/>
+    <rect x="14" y="0" width="8" height="44" rx="4" fill="black"/>
+    <rect x="28" y="4" width="8" height="36" rx="4" fill="black"/>
   </g>
 
-  <!-- "Smart" Label -->
-  <text x="50" y="85" font-family="sans-serif" font-weight="bold" font-size="12" fill="black" text-anchor="middle">SMART</text>
+  <!-- Clean Geometric Label -->
+  <text x="50" y="85" font-family="Helvetica, Arial, sans-serif" font-weight="900" font-size="10" fill="black" text-anchor="middle" letter-spacing="2">SMART</text>
 </svg>

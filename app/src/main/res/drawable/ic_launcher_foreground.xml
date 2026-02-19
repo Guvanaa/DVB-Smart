@@ -8,18 +8,16 @@
         android:fillColor="#FFCC00"
         android:pathData="M15,15h78v78h-78z" />
 
-    <group android:translateX="20" android:translateY="30">
-        <!-- Three stripes -->
-        <path android:fillColor="#000000" android:pathData="M0,5h5v35h-5z" />
-        <path android:fillColor="#000000" android:pathData="M8,0h5v45h-5z" />
-        <path android:fillColor="#000000" android:pathData="M16,5h5v35h-5z" />
-
-        <!-- Simplified DVB letters as paths -->
-        <!-- D -->
-        <path android:fillColor="#000000" android:pathData="M30,10h10c5,0 8,3 8,10c0,7 -3,10 -8,10h-10z M35,15v10h5c3,0 4,-1 4,-5c0,-4 -1,-5 -4,-5z" />
-        <!-- V -->
-        <path android:fillColor="#000000" android:pathData="M52,10l5,20l5,-20h5l-8,30h-4l-8,-30z" />
-        <!-- B -->
-        <path android:fillColor="#000000" android:pathData="M70,10h10c3,0 5,1 5,5c0,3 -2,4 -4,5c3,1 4,2 4,5c0,4 -2,5 -5,5h-10z M75,14v5h5c2,0 3,-1 3,-2.5c0,-1.5 -1,-2.5 -3,-2.5z M75,22v5h5c2,0 3,-1 3,-2.5c0,-1.5 -1,-2.5 -3,-2.5z" />
+    <!-- Minimalist stripes group -->
+    <group android:translateX="34" android:translateY="30">
+        <path
+            android:fillColor="#000000"
+            android:pathData="M0,4h8c2.2,0 4,1.8 4,4v28c0,2.2 -1.8,4 -4,4h-8c-2.2,0 -4,-1.8 -4,-4v-28c0,-2.2 1.8,-4 4,-4z" />
+        <path
+            android:fillColor="#000000"
+            android:pathData="M14,0h8c2.2,0 4,1.8 4,4v36c0,2.2 -1.8,4 -4,4h-8c-2.2,0 -4,-1.8 -4,-4v-36c0,-2.2 1.8,-4 4,-4z" />
+        <path
+            android:fillColor="#000000"
+            android:pathData="M28,4h8c2.2,0 4,1.8 4,4v28c0,2.2 -1.8,4 -4,4h-8c-2.2,0 -4,-1.8 -4,-4v-28c0,-2.2 1.8,-4 4,-4z" />
     </group>
 </vector>
