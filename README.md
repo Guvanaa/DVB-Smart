@@ -48,5 +48,6 @@ Alternatively, use the Gradle wrapper:
 ```
 
 ## Credits
+Developed by **Guvana**.
 This app is powered by the open transit data of [VVO](https://www.vvo-online.de) and [DVB](https://www.dvb.de).
 Inspired by Apple's glassmorphism design language.

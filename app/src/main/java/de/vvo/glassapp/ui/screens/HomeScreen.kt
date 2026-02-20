@@ -145,8 +145,15 @@ fun HomeScreen(navController: NavController) {
             colors = ButtonDefaults.buttonColors(containerColor = DvbYellow),
             shape = RoundedCornerShape(16.dp)
         ) {
-            Text("Zur Karte", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            Text(stringResource(R.string.to_map), color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 18.sp)
         }
+
+        Text(
+            text = stringResource(R.string.developed_by),
+            color = Color.White.copy(alpha = 0.4f),
+            fontSize = 12.sp,
+            modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 8.dp)
+        )
     }
 }
 

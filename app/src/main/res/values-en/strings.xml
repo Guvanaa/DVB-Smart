@@ -13,4 +13,5 @@
     <string name="punctual">on time</string>
     <string name="loading_departures">Loading nearby departures...</string>
     <string name="to_map">To Map</string>
+    <string name="developed_by">Developed by Guvana</string>
 </resources>

@@ -13,4 +13,5 @@
     <string name="punctual">pünktlich</string>
     <string name="loading_departures">Lade Abfahrten in der Nähe...</string>
     <string name="to_map">Zur Karte</string>
+    <string name="developed_by">Entwickelt von Guvana</string>
 </resources>
