@@ -22,7 +22,7 @@
     - 🟢 **Green**: Ahead of schedule
     - 🟡 **Yellow**: On-time
     - 🔴 **Red**: Delayed
-- **Interactive Routes**: Select any vehicle to view its full path and a vertical stop-by-stop view with live delays.
+- **Interactive Routes**: Select any vehicle to view its full path and a vertical **"Fieberthermometer"** (stop-by-stop) view with live delays.
 
 ### 🔍 Smart Utilities
 - **Integrated Search**: Find stops, specific addresses, or Points of Interest (POIs) using high-performance geocoding.
@@ -61,7 +61,7 @@
 ### Installation
 1. Clone the repository:
    ```bash
-   git clone https://github.com/guvana/dvb-smart.git
+   git clone https://github.com/Guvana/DVB-Smart.git
    ```
 2. Open the project in Android Studio.
 3. Synchronize Gradle and run the `app` module.
@@ -75,11 +75,11 @@ Alternatively, build the APK via command line:
 
 ## 👥 Credits
 
-Developed with ❤️ by **Guvana**.
+Developed with ❤️ by **Guvana** & **Jules** (AI Assistant).
 
 Special thanks to:
 - **VVO (Verkehrsverbund Oberelbe)** & **DVB (Dresdner Verkehrsbetriebe)** for providing open transit data.
 - The **MapLibre** community for their excellent open-source map engine.
 
 ---
-<p align="center">© 2024 Guvana. All rights reserved.</p>
+<p align="center">© 2026 Guvana. All rights reserved.</p>
