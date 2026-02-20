@@ -5,7 +5,7 @@
 [![Compose](https://img.shields.io/badge/Jetpack%20Compose-1.5.8-4285F4.svg)](https://developer.android.com/jetpack/compose)
 [![Developer](https://img.shields.io/badge/Developer-Guvana-FF2D55.svg)](#credits)
 
-**DVB-Smart** is a premium transit companion for Dresden (VVO/DVB), meticulously crafted with an **Apple-inspired Liquid Glass** design language. Featuring **Gemini**, your intelligent AI guide, it combines real-time data accuracy with a sophisticated glassmorphism aesthetic to provide the ultimate commuting experience.
+**DVB-Smart** is a premium transit companion for Dresden (VVO/DVB), meticulously crafted with an **Apple-inspired Liquid Glass** design language. Featuring **Lunina**, your intelligent AI guide, it combines real-time data accuracy with a sophisticated glassmorphism aesthetic to provide the ultimate commuting experience.
 
 ---
 
@@ -27,7 +27,7 @@
 ### 🔍 Smart Utilities
 - **Integrated Search**: Find stops, specific addresses, or Points of Interest (POIs) using high-performance geocoding.
 - **One-Tap Favorites**: Quick-launch connections from your current location to saved destinations like Home or Work.
-- **Gemini AI Assistant**: A creative, intelligent companion to help you navigate the DVB network through conversational queries.
+- **Lunina AI Assistant**: A creative, intelligent companion to help you navigate the DVB network through conversational queries.
 - **Home Screen Widget**: Stay updated at a glance with the dedicated Favorites widget.
 
 ---

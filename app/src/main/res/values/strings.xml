@@ -14,7 +14,7 @@
     <string name="loading_departures">Lade Abfahrten in der Nähe...</string>
     <string name="to_map">Zur Karte</string>
     <string name="developed_by">Entwickelt von Guvana</string>
-    <string name="assistant_name">Gemini</string>
-    <string name="assistant_hint">Frag Gemini über den DVB…</string>
-    <string name="assistant_welcome">Hallo! Ich bin Gemini, dein intelligenter DVB-Begleiter. Wie kann ich dir heute helfen?</string>
+    <string name="assistant_name">Lunina</string>
+    <string name="assistant_hint">Frag Lunina über den DVB…</string>
+    <string name="assistant_welcome">Hallo! Ich bin Lunina, dein intelligenter DVB-Begleiter. Wie kann ich dir heute helfen?</string>
 </resources>
