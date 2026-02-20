@@ -22,7 +22,7 @@
     - 🟢 **Green**: Ahead of schedule
     - 🟡 **Yellow**: On-time
     - 🔴 **Red**: Delayed
-- **Interactive Routes**: Select any vehicle to view its full path and a vertical **"Fieberthermometer"** (stop-by-stop) view with live delays.
+- **Interactive Routes**: Select any vehicle to view its full path and a vertical stop-by-stop view with live delays.
 
 ### 🔍 Smart Utilities
 - **Integrated Search**: Find stops, specific addresses, or Points of Interest (POIs) using high-performance geocoding.
