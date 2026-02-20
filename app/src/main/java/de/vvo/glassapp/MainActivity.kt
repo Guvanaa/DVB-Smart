@@ -19,9 +19,12 @@ import de.vvo.glassapp.ui.screens.HomeScreen
 import de.vvo.glassapp.ui.screens.MapScreen
 import de.vvo.glassapp.ui.theme.*
 
+import de.vvo.glassapp.util.ServiceLocator
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        ServiceLocator.init(this)
         setContent {
             GlassAppTheme {
                 Box(

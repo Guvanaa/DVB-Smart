@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.mapbox.mapboxsdk.Mapbox
 import com.mapbox.mapboxsdk.camera.CameraPosition
@@ -34,7 +35,6 @@ import de.vvo.glassapp.data.model.VehiclePin
 import de.vvo.glassapp.ui.components.GlassCard
 import de.vvo.glassapp.ui.theme.DvbYellow
 import de.vvo.glassapp.ui.viewmodel.TransitViewModel
-import de.vvo.glassapp.util.ServiceLocator
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -46,7 +46,7 @@ fun MapScreen(
     lon: Double? = null
 ) {
     val context = LocalContext.current
-    val viewModel: TransitViewModel = remember { TransitViewModel(ServiceLocator.repository) }
+    val viewModel: TransitViewModel = viewModel(factory = TransitViewModel.Factory)
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -57,8 +57,11 @@ fun MapScreen(
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.ACCESS_COARSE_LOCATION
         ))
+        // Simulate user location for this demo
+        viewModel.updateUserLocation(51.0509, 13.7373)
     }
 
+    var mapInstance by remember { mutableStateOf<com.mapbox.mapboxsdk.maps.MapboxMap?>(null) }
     var symbolManager by remember { mutableStateOf<SymbolManager?>(null) }
     var lineManager by remember { mutableStateOf<LineManager?>(null) }
 
@@ -132,6 +135,7 @@ fun MapScreen(
                 MapView(context).apply {
                     onCreate(null)
                     getMapAsync { mapboxMap ->
+                        mapInstance = mapboxMap
                         val styleUrl = "https://demotiles.maplibre.org/style.json"
                         mapboxMap.setStyle(styleUrl) { style ->
                             symbolManager = SymbolManager(this, mapboxMap, style).apply {
@@ -172,7 +176,11 @@ fun MapScreen(
 
         IconButton(
             onClick = {
-                // In a real app, we would animate to user location
+                mapInstance?.animateCamera(
+                    com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLngZoom(
+                        LatLng(51.0509, 13.7373), 15.0
+                    )
+                )
             },
             modifier = Modifier.padding(20.dp).statusBarsPadding().align(Alignment.TopEnd)
         ) {
@@ -189,7 +197,13 @@ fun MapScreen(
             Box(
                 modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(16.dp).navigationBarsPadding()
             ) {
-                RouteDetailSheet(stops = routeStops, onStopClick = { })
+                RouteDetailSheet(stops = routeStops, onStopClick = { stop ->
+                    mapInstance?.animateCamera(
+                        com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLngZoom(
+                            LatLng(stop.lat, stop.lon), 15.0
+                        )
+                    )
+                })
                 IconButton(
                     onClick = { viewModel.deselectVehicle() },
                     modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)

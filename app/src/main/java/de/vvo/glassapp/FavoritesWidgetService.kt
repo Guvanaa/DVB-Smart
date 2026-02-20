@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.widget.RemoteViews
 import android.widget.RemoteViewsService
+import de.vvo.glassapp.data.repository.FavoritesManager
 
 class FavoritesWidgetService : RemoteViewsService() {
     override fun onGetViewFactory(intent: Intent): RemoteViewsFactory {
@@ -12,10 +13,19 @@ class FavoritesWidgetService : RemoteViewsService() {
 }
 
 class FavoritesWidgetItemFactory(private val context: Context) : RemoteViewsService.RemoteViewsFactory {
-    private val favorites = listOf("Arbeit", "Zuhause", "Hauptbahnhof")
+    private var favorites = listOf<String>()
 
-    override fun onCreate() {}
-    override fun onDataSetChanged() {}
+    override fun onCreate() {
+        loadFavorites()
+    }
+    override fun onDataSetChanged() {
+        loadFavorites()
+    }
+
+    private fun loadFavorites() {
+        val manager = FavoritesManager(context)
+        favorites = manager.getFavorites().map { it.name }
+    }
     override fun onDestroy() {}
     override fun getCount(): Int = favorites.size
 

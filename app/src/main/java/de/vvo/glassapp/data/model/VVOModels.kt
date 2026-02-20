@@ -78,3 +78,5 @@ data class Section(
     @SerializedName("Line") val line: String? = null,
     @SerializedName("Direction") val direction: String? = null
 )
+
+data class ChatMessage(val text: String, val isFromUser: Boolean)

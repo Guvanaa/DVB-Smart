@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,21 +22,22 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import de.vvo.glassapp.R
 import de.vvo.glassapp.data.model.Stop
 import de.vvo.glassapp.ui.components.GlassCard
 import de.vvo.glassapp.ui.theme.DvbYellow
 import de.vvo.glassapp.ui.viewmodel.TransitViewModel
-import de.vvo.glassapp.util.ServiceLocator
 
 @Composable
 fun HomeScreen(navController: NavController) {
-    val viewModel: TransitViewModel = remember { TransitViewModel(ServiceLocator.repository) }
+    val viewModel: TransitViewModel = viewModel(factory = TransitViewModel.Factory)
     var searchQuery by remember { mutableStateOf("") }
     val searchResults by viewModel.searchResults.collectAsState()
     val locationResults by viewModel.locationResults.collectAsState()
     val trips by viewModel.trips.collectAsState()
+    val isSearchingTrips = viewModel.isSearchingTrips
     val favorites by viewModel.favorites.collectAsState()
 
     Column(
@@ -109,7 +111,12 @@ fun HomeScreen(navController: NavController) {
                     SectionHeader("Haltestellen")
                 }
                 items(searchResults) { stop ->
-                    GlassSearchResultItem(stop.name, stop.place ?: "Dresden") {
+                    GlassSearchResultItem(
+                        title = stop.name,
+                        subtitle = stop.place ?: "Dresden",
+                        isFavorite = favorites.any { it.stopId == stop.id },
+                        onFavoriteClick = { viewModel.toggleFavorite(stop.name, stop.id) }
+                    ) {
                         navController.navigate("map/${stop.id}")
                     }
                 }
@@ -137,12 +144,16 @@ fun HomeScreen(navController: NavController) {
             ) {
                 items(favorites) { favorite ->
                     FavoriteItem(favorite) {
-                        viewModel.findTrips("33000028", favorite.stopId)
+                        viewModel.findTrips(null, favorite.stopId)
                     }
                 }
             }
 
-            if (trips.isNotEmpty()) {
+            if (isSearchingTrips) {
+                Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = DvbYellow)
+                }
+            } else if (trips.isNotEmpty()) {
                 SectionHeader(stringResource(R.string.connections))
                 LazyColumn(modifier = Modifier.weight(1f)) {
                     items(trips) { trip ->
@@ -187,7 +198,13 @@ fun SectionHeader(title: String) {
 }
 
 @Composable
-fun GlassSearchResultItem(title: String, subtitle: String, onClick: () -> Unit) {
+fun GlassSearchResultItem(
+    title: String,
+    subtitle: String,
+    isFavorite: Boolean = false,
+    onFavoriteClick: (() -> Unit)? = null,
+    onClick: () -> Unit
+) {
     GlassCard(
         modifier = Modifier
             .fillMaxWidth()
@@ -195,9 +212,24 @@ fun GlassSearchResultItem(title: String, subtitle: String, onClick: () -> Unit) 
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp)
     ) {
-        Column {
-            Text(text = title, fontWeight = FontWeight.Bold, color = Color.White)
-            Text(text = subtitle, fontSize = 13.sp, color = Color.White.copy(alpha = 0.7f))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = title, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(text = subtitle, fontSize = 13.sp, color = Color.White.copy(alpha = 0.7f))
+            }
+            if (onFavoriteClick != null) {
+                IconButton(onClick = onFavoriteClick) {
+                    Icon(
+                        imageVector = if (isFavorite) Icons.Filled.Star else Icons.Outlined.Star,
+                        contentDescription = "Favorite",
+                        tint = if (isFavorite) DvbYellow else Color.White.copy(alpha = 0.5f)
+                    )
+                }
+            }
         }
     }
 }
@@ -215,7 +247,7 @@ fun FavoriteItem(favorite: de.vvo.glassapp.ui.viewmodel.Favorite, onClick: () ->
             verticalArrangement = Arrangement.Center,
             modifier = Modifier.fillMaxSize()
         ) {
-            Icon(Icons.Default.Star, contentDescription = null, tint = DvbYellow, modifier = Modifier.size(32.dp))
+            Icon(Icons.Filled.Star, contentDescription = null, tint = DvbYellow, modifier = Modifier.size(32.dp))
             Spacer(modifier = Modifier.height(8.dp))
             Text(text = favorite.name, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
         }

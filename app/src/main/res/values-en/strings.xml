@@ -17,4 +17,12 @@
     <string name="assistant_name">Lunina</string>
     <string name="assistant_hint">Ask Lunina about DVB…</string>
     <string name="assistant_welcome">Hi! I\'m Lunina, your intelligent DVB companion. How can I help you today?</string>
+    <string name="assistant_error">Sorry, I\'m having trouble retrieving the data right now. Could you try again?</string>
+    <string name="assistant_initial_response">Hi! I\'m Lunina. I can help you find departures or plan connections in Dresden. What are you looking for?</string>
+    <string name="assistant_departure_found">At %1$s, the %2$s to %3$s departs in %4$s.</string>
+    <string name="assistant_stop_not_found">Which stop would you like to know the departures for?</string>
+    <string name="assistant_no_departures">I found the stop %1$s, but there are currently no departures.</string>
+    <string name="assistant_delay_info">Checking the DVB network... There are no major disruptions at the moment, but line 3 has about a 5-minute delay at the main station.</string>
+    <string name="assistant_thanks_response">You\'re very welcome! Have a good trip with the DVB.</string>
+    <string name="assistant_fallback">That sounds interesting! As your DVB assistant, I can best help you if you ask about stops, departures, or lines.</string>
 </resources>
