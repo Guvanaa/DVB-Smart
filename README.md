@@ -1,53 +1,85 @@
-# <img src="logo.svg" width="48" height="48" valign="middle"> DVB-Smart
+# <img src="logo.svg" width="64" height="64" valign="middle"> DVB-Smart
 
-DVB-Smart is a high-end public transportation app for the Dresden (VVO) area, featuring a modern **Apple-inspired Liquid Glass (Glassmorphism)** design. It provides real-time vehicle tracking, route information, and connection search with a focus on user experience and aesthetics.
+[![Platform](https://img.shields.io/badge/Platform-Android-3DDC84.svg)](https://www.android.com/)
+[![Kotlin](https://img.shields.io/badge/Kotlin-1.9.22-7F52FF.svg)](https://kotlinlang.org/)
+[![Compose](https://img.shields.io/badge/Jetpack%20Compose-1.5.8-4285F4.svg)](https://developer.android.com/jetpack/compose)
+[![Developer](https://img.shields.io/badge/Developer-Guvana-FF2D55.svg)](#credits)
 
-## Features
+**DVB-Smart** is a premium transit companion for Dresden (VVO/DVB), meticulously crafted with an **Apple-inspired Liquid Glass** design language. It combines real-time data accuracy with a sophisticated glassmorphism aesthetic to provide the ultimate commuting experience.
 
-- **Apple Liquid Glass Design**: Sophisticated glassmorphism effects with frosted glass cards, vibrant gradients, and smooth animations.
-- **Live Vehicle Map**: Track buses and trams across Dresden in real-time with mode-specific icons (Bus, Tram, Train).
-- **Home Screen Widget**: Quick access to your favorite connections directly from your home screen.
+---
+
+## 📱 Features
+
+### ✨ Design & Experience
+- **Liquid Glass UI**: High-fidelity glassmorphism effects including frosted glass surfaces, vibrant gradients, and smooth spring animations.
+- **Adaptive Modes**: Native support for both **Light and Dark modes**, with color palettes optimized for readability and elegance.
+- **Micro-interactions**: Subtle tactile feedback and fluid transitions that mimic a premium OS experience.
+
+### 🗺️ Live Navigation
+- **Real-time Vehicle Map**: Track buses, trams, and trains across Dresden. Icons show line numbers and are color-coded by punctuality.
 - **Punctuality Indicators**:
-    - 🟢 **Green**: Early
-    - 🟡 **Yellow**: On-time (DVB Yellow)
+    - 🟢 **Green**: Ahead of schedule
+    - 🟡 **Yellow**: On-time
     - 🔴 **Red**: Delayed
-- **Interactive Routes**: Click on any vehicle on the map to see its full route drawn as a line and a vertical "thermometer" stop list.
-- **Smart Search**: Find stops, addresses, and Points of Interest (POIs) using integrated geocoding.
-- **Connection Search**: One-tap navigation from your location to your favorite destinations (Home, Work, etc.).
-- **Dual Mode Support**: Fully optimized for both Light and Dark modes.
-- **Localization**: Available in **German** (default) and **English**.
+- **Interactive Routes**: Select any vehicle to view its full path and a vertical **"Fieberthermometer"** (stop-by-stop) view with live delays.
 
-## Screenshots
+### 🔍 Smart Utilities
+- **Integrated Search**: Find stops, specific addresses, or Points of Interest (POIs) using high-performance geocoding.
+- **One-Tap Favorites**: Quick-launch connections from your current location to saved destinations like Home or Work.
+- **Home Screen Widget**: Stay updated at a glance with the dedicated Favorites widget.
 
-![DVB-Smart Preview](app/screenshots/preview.png)
+---
 
-*The high-fidelity Liquid Glass design with live map tracking and connection search.*
+## 📸 Screenshots
 
-## Built With
+<p align="center">
+  <img src="app/screenshots/preview.png" width="800" alt="DVB-Smart Interface Preview">
+</p>
 
-- **Kotlin** & **Jetpack Compose**: Modern Android UI toolkit.
-- **MapLibre SDK**: High-performance vector maps.
-- **Retrofit & OkHttp**: Robust networking for transit and geocoding data.
-- **VVO WebAPI**: Real-time transit data from Verkehrsverbund Oberelbe.
-- **Photon API**: Open-source geocoding for address and POI search.
+---
 
-## Getting Started
+## 🛠️ Technical Stack
+
+- **UI Framework**: [Jetpack Compose](https://developer.android.com/jetpack/compose) for modern declarative UI.
+- **Map Engine**: [MapLibre SDK](https://maplibre.org/) for high-performance vector maps.
+- **Networking**: [Retrofit](https://square.github.io/retrofit/) & [OkHttp](https://square.github.io/okhttp/) for robust API communication.
+- **Data Sources**:
+    - **VVO WebAPI**: Real-time transit data.
+    - **Photon API**: Open-source geocoding for POIs and addresses.
+- **Architecture**: MVVM with a clean Repository pattern.
+
+---
+
+## 🚀 Getting Started
 
 ### Prerequisites
-- Android Studio Iguana or newer.
-- JDK 17.
+- **Android Studio Iguana** or newer.
+- **JDK 17**.
+- Physical device or emulator with **Android 8.0 (API 26)** or higher.
 
-### Building
-1. Clone the repository.
-2. Open in Android Studio.
-3. Build and run the `app` module.
+### Installation
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/guvana/dvb-smart.git
+   ```
+2. Open the project in Android Studio.
+3. Synchronize Gradle and run the `app` module.
 
-Alternatively, use the Gradle wrapper:
+Alternatively, build the APK via command line:
 ```bash
 ./gradlew assembleDebug
 ```
 
-## Credits
-Developed by **Guvana**.
-This app is powered by the open transit data of [VVO](https://www.vvo-online.de) and [DVB](https://www.dvb.de).
-Inspired by Apple's glassmorphism design language.
+---
+
+## 👥 Credits
+
+Developed with ❤️ by **Guvana**.
+
+Special thanks to:
+- **VVO (Verkehrsverbund Oberelbe)** & **DVB (Dresdner Verkehrsbetriebe)** for providing open transit data.
+- The **MapLibre** community for their excellent open-source map engine.
+
+---
+<p align="center">© 2024 Guvana. All rights reserved.</p>

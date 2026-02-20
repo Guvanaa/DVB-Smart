@@ -1,0 +1,35 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="mainGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#007AFF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#5856D6;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="glassGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:0.4" />
+      <stop offset="100%" style="stop-color:#FFFFFF;stop-opacity:0.1" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="20" />
+      <feOffset dx="0" dy="10" result="offsetblur" />
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.3" />
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- Background Shape -->
+  <rect x="128" y="128" width="768" height="768" rx="180" fill="url(#mainGrad)" filter="url(#shadow)" />
+
+  <!-- Glassy Overlay -->
+  <rect x="256" y="256" width="512" height="512" rx="120" fill="url(#glassGrad)" stroke="white" stroke-width="2" stroke-opacity="0.5" />
+
+  <!-- Smart Icon Symbol (Abstract S / Connection) -->
+  <path d="M400 350 C350 350, 350 450, 400 450 L624 450 C674 450, 674 550, 624 550 L400 550 C350 550, 350 650, 400 650"
+        fill="none" stroke="white" stroke-width="60" stroke-linecap="round" opacity="0.9" />
+
+  <!-- Dot representing a Stop -->
+  <circle cx="624" cy="650" r="45" fill="#FFCC00" />
+</svg>
