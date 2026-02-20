@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import de.vvo.glassapp.ui.screens.AssistantScreen
 import de.vvo.glassapp.ui.screens.HomeScreen
 import de.vvo.glassapp.ui.screens.MapScreen
 import de.vvo.glassapp.ui.theme.*
@@ -48,6 +49,7 @@ fun AppNavigation() {
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = "home") {
         composable("home") { HomeScreen(navController) }
+        composable("assistant") { AssistantScreen(navController) }
         composable("map") { MapScreen(navController) }
         composable("map/{stopId}") { backStackEntry ->
             val stopId = backStackEntry.arguments?.getString("stopId")

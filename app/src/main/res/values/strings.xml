@@ -14,4 +14,7 @@
     <string name="loading_departures">Lade Abfahrten in der Nähe...</string>
     <string name="to_map">Zur Karte</string>
     <string name="developed_by">Entwickelt von Guvana</string>
+    <string name="assistant_name">Smart Jules</string>
+    <string name="assistant_hint">Frag mich etwas über den DVB…</string>
+    <string name="assistant_welcome">Hallo! Ich bin Jules, dein KI-DVB-Assistent. Wie kann ich dir heute helfen?</string>
 </resources>

@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
@@ -43,13 +44,30 @@ fun HomeScreen(navController: NavController) {
             .padding(20.dp)
             .statusBarsPadding()
     ) {
-        Text(
-            text = "DVB-Smart",
-            fontSize = 34.sp,
-            fontWeight = FontWeight.ExtraBold,
-            color = Color.White,
-            modifier = Modifier.padding(bottom = 24.dp)
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "DVB-Smart",
+                fontSize = 34.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = Color.White
+            )
+            IconButton(
+                onClick = { navController.navigate("assistant") }
+            ) {
+                GlassCard(modifier = Modifier.size(44.dp)) {
+                    Icon(
+                        Icons.Default.AutoAwesome,
+                        contentDescription = "AI Assistant",
+                        tint = DvbYellow,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
+        }
 
         // Custom Glass Search Bar
         GlassCard(

@@ -14,4 +14,7 @@
     <string name="loading_departures">Loading nearby departures...</string>
     <string name="to_map">To Map</string>
     <string name="developed_by">Developed by Guvana</string>
+    <string name="assistant_name">Smart Jules</string>
+    <string name="assistant_hint">Ask me anything about DVB…</string>
+    <string name="assistant_welcome">Hi! I\'m Jules, your AI DVB assistant. How can I help you today?</string>
 </resources>
