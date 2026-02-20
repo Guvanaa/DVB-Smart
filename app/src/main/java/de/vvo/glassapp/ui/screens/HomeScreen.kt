@@ -44,7 +44,7 @@ fun HomeScreen(navController: NavController) {
             .statusBarsPadding()
     ) {
         Text(
-            text = "DVB Glass",
+            text = "DVB-Smart",
             fontSize = 34.sp,
             fontWeight = FontWeight.ExtraBold,
             color = Color.White,
