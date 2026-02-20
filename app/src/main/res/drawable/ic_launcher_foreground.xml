@@ -3,18 +3,29 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <group android:translateX="22" android:translateY="39" android:scaleX="0.1" android:scaleY="0.1">
-        <!-- d -->
+    <group android:scaleX="0.1" android:scaleY="0.1" android:translateX="0" android:translateY="0">
+        <!-- Tram Body -->
         <path
-            android:pathData="M110,0v300h-110v-150a110,110 0,0 1,110 -150z"
+            android:pathData="M400,384h224a80,80 0,0 1,80 80v288a80,80 0,0 1,-80 80h-224a80,80 0,0 1,-80 -80v-288a80,80 0,0 1,80 -80z"
             android:fillColor="#000000"/>
-        <!-- v -->
+        <!-- Windshield -->
         <path
-            android:pathData="M140,100l70,180l70,-180h60l-100,250h-60l-100,-250z"
-            android:fillColor="#000000"/>
-        <!-- b -->
+            android:pathData="M400,424h224a40,40 0,0 1,40 40v100a40,40 0,0 1,-40 40h-224a40,40 0,0 1,-40 -40v-100a40,40 0,0 1,40 -40z"
+            android:fillColor="#ffffff"
+            android:fillAlpha="0.3"/>
+        <!-- Headlights -->
         <path
-            android:pathData="M530,0v300h110a110,110 0,0 0,0 -220h-110v-80z"
-            android:fillColor="#000000"/>
+            android:pathData="M420,736m-24,0a24,24 0,1 1,48 0a24,24 0,1 1,-48 0"
+            android:fillColor="#ffffff"/>
+        <path
+            android:pathData="M604,736m-24,0a24,24 0,1 1,48 0a24,24 0,1 1,-48 0"
+            android:fillColor="#ffffff"/>
+        <!-- Pantograph -->
+        <path
+            android:pathData="M512,384L512,320L456,288L568,288L512,320"
+            android:strokeColor="#000000"
+            android:strokeWidth="20"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"/>
     </group>
 </vector>
