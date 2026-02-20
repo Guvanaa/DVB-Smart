@@ -5,33 +5,32 @@
     android:viewportWidth="1024"
     android:viewportHeight="1024">
     <path
-        android:pathData="M128,308C128,208.59 208.59,128 308,128h408C815.41,128 896,208.59 896,308v408C896,815.41 815.41,896 716,896H308C208.59,896 128,815.41 128,716V308z">
+        android:pathData="M0,0h1024v1024h-1024z">
         <aapt:attr name="android:fillColor">
             <gradient
-                android:startX="128"
-                android:startY="128"
-                android:endX="896"
-                android:endY="896"
+                android:startX="0"
+                android:startY="0"
+                android:endX="1024"
+                android:endY="1024"
                 android:type="linear">
                 <item android:offset="0" android:color="#FFFFCC00"/>
                 <item android:offset="1" android:color="#FFFFD700"/>
             </gradient>
         </aapt:attr>
     </path>
+    <!-- d -->
     <path
-        android:pathData="M256,376C256,309.73 309.73,256 376,256h272C714.27,256 768,309.73 768,376v272C768,714.27 714.27,768 648,768H376C309.73,768 256,714.27 256,648V376z"
+        android:pathData="M302,362v300h-110v-150a110,110 0,0 1,110 -150z"
         android:fillColor="#000000"
-        android:fillAlpha="0.1"
-        android:strokeColor="#000000"
-        android:strokeWidth="2"
-        android:strokeAlpha="0.2"/>
+        android:fillAlpha="0.85"/>
+    <!-- v -->
     <path
-        android:pathData="M400,350c-50,0 -50,100 0,100h224c50,0 50,100 0,100H400c-50,0 -50,100 0,100"
-        android:strokeColor="#000000"
-        android:strokeWidth="60"
-        android:strokeLineCap="round"
-        android:strokeAlpha="0.8"/>
+        android:pathData="M332,462l70,180l70,-180h60l-100,250h-60l-100,-250z"
+        android:fillColor="#000000"
+        android:fillAlpha="0.85"/>
+    <!-- b -->
     <path
-        android:pathData="M624,650m-45,0a45,45 0,1 1,90 0a45,45 0,1 1,-90 0"
-        android:fillColor="#ffffff"/>
+        android:pathData="M722,362v300h110a110,110 0,0 0,0 -220h-110v-80z"
+        android:fillColor="#000000"
+        android:fillAlpha="0.85"/>
 </vector>
