@@ -82,4 +82,4 @@ Special thanks to:
 - The **MapLibre** community for their excellent open-source map engine.
 
 ---
-<p align="center">© 2026 Guvana. All rights reserved.</p>
+<p align="center">© 2024 Guvana. All rights reserved.</p>
