@@ -14,7 +14,7 @@
     <string name="loading_departures">Loading nearby departures...</string>
     <string name="to_map">To Map</string>
     <string name="developed_by">Developed by Guvana</string>
-    <string name="assistant_name">Lumina</string>
-    <string name="assistant_hint">Ask Lumina about DVB…</string>
-    <string name="assistant_welcome">Hi! I\'m Lumina, your intelligent DVB companion. How can I help you today?</string>
+    <string name="assistant_name">Gemini</string>
+    <string name="assistant_hint">Ask Gemini about DVB…</string>
+    <string name="assistant_welcome">Hi! I\'m Gemini, your intelligent DVB companion. How can I help you today?</string>
 </resources>
