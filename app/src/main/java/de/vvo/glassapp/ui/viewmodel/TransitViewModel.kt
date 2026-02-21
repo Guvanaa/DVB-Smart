@@ -144,7 +144,15 @@ class TransitViewModel(
                 context.getString(de.vvo.glassapp.R.string.assistant_delay_info)
 
             lowInput.contains("favoriten") || lowInput.contains("stern") -> {
-                "Deine Favoriten sind: " + _favorites.value.joinToString { it.name }
+                if (_favorites.value.isEmpty()) {
+                    "Du hast noch keine Favoriten gespeichert. Suche eine Haltestelle und klicke auf den Stern!"
+                } else {
+                    "Deine Favoriten sind: " + _favorites.value.joinToString { it.name }
+                }
+            }
+
+            lowInput.contains("hilf") || lowInput.contains("hilfe") || lowInput.contains("was kannst du") -> {
+                "Ich kann dir Abfahrten für Haltestellen nennen (z.B. 'Wann fährt die nächste Bahn am Postplatz?'), dir deine Favoriten zeigen oder die Karte öffnen."
             }
 
             lowInput.contains("danke") || lowInput.contains("super") || lowInput.contains("cool") ->

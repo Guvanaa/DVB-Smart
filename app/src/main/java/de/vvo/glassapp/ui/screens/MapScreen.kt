@@ -213,8 +213,8 @@ fun MapScreen(
                                 addClickListener { symbol ->
                                     val data = symbol.data?.asString
                                     if (data?.startsWith("s_") == true) {
-                                        val stopId = data.removePrefix("s_")
-                                        stops.find { it.id == stopId }?.let { viewModel.selectStop(it) }
+                                        val foundStopId = data.removePrefix("s_")
+                                        stops.find { it.id == foundStopId }?.let { viewModel.selectStop(it) }
                                     }
                                     true
                                 }
