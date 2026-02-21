@@ -31,7 +31,12 @@ class TransitRepository(
     }
 
     suspend fun getTrips(origin: String, destination: String, isArrival: Boolean = false, time: String? = null) = withContext(Dispatchers.IO) {
-        vvoApi.getTrips(origin, destination, isArrival, time).trips ?: emptyList()
+        try {
+            vvoApi.getTrips(origin, destination, isArrival, time).trips ?: emptyList()
+        } catch (e: Exception) {
+            android.util.Log.e("TransitRepository", "Trip API failed", e)
+            emptyList()
+        }
     }
 
     suspend fun searchLocations(query: String) = withContext(Dispatchers.IO) {

@@ -23,6 +23,13 @@ object ServiceLocator {
 
     private val client = OkHttpClient.Builder()
         .addInterceptor(loggingInterceptor)
+        .addInterceptor { chain ->
+            val request = chain.request().newBuilder()
+                .header("User-Agent", "DVB-Smart-Android/1.0")
+                .header("Accept", "application/json")
+                .build()
+            chain.proceed(request)
+        }
         .build()
 
     private val vvoRetrofit = Retrofit.Builder()

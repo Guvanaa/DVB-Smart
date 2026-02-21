@@ -13,7 +13,7 @@ class FavoritesWidgetService : RemoteViewsService() {
 }
 
 class FavoritesWidgetItemFactory(private val context: Context) : RemoteViewsService.RemoteViewsFactory {
-    private var favorites = listOf<String>()
+    private var favorites = listOf<de.vvo.glassapp.ui.viewmodel.Favorite>()
 
     override fun onCreate() {
         loadFavorites()
@@ -24,18 +24,28 @@ class FavoritesWidgetItemFactory(private val context: Context) : RemoteViewsServ
 
     private fun loadFavorites() {
         val manager = FavoritesManager(context)
-        favorites = manager.getFavorites().map { it.name }
+        favorites = manager.getFavorites()
     }
     override fun onDestroy() {}
     override fun getCount(): Int = favorites.size
 
     override fun getViewAt(position: Int): RemoteViews {
-        val views = RemoteViews(context.packageName, android.R.layout.simple_list_item_1)
-        views.setTextViewText(android.R.id.text1, favorites[position])
-        views.setTextColor(android.R.id.text1, android.graphics.Color.WHITE)
+        val favorite = favorites[position]
+        val views = RemoteViews(context.packageName, R.layout.widget_favorite_item)
+        views.setTextViewText(R.id.item_text, favorite.name)
+
+        val iconRes = when(favorite.iconName) {
+            "Work" -> R.drawable.ic_work
+            "Home" -> R.drawable.ic_home
+            "School" -> R.drawable.ic_school
+            "Train" -> R.drawable.ic_train
+            "Place" -> R.drawable.ic_place
+            else -> R.drawable.ic_star
+        }
+        views.setImageViewResource(R.id.item_icon, iconRes)
 
         val fillInIntent = Intent()
-        views.setOnClickFillInIntent(android.R.id.text1, fillInIntent)
+        views.setOnClickFillInIntent(R.id.item_text, fillInIntent)
 
         return views
     }

@@ -26,21 +26,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             GlassAppTheme {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(
-                                    BackgroundGradientStart,
-                                    BackgroundGradientMiddle,
-                                    BackgroundGradientEnd
-                                )
-                            )
-                        )
-                ) {
-                    AppNavigation()
-                }
+                AppNavigation()
             }
         }
     }

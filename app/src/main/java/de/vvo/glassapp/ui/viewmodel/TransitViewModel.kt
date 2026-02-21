@@ -99,6 +99,26 @@ class TransitViewModel(
         _userLocation.value = LatLng(lat, lon)
     }
 
+    fun refreshLocation(context: android.content.Context) {
+        try {
+            val locationManager = context.getSystemService(android.content.Context.LOCATION_SERVICE) as android.location.LocationManager
+            val location = locationManager.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
+                ?: locationManager.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
+
+            location?.let {
+                updateUserLocation(it.latitude, it.longitude)
+            } ?: run {
+                if (_userLocation.value == null) {
+                    updateUserLocation(51.0509, 13.7373)
+                }
+            }
+        } catch (e: SecurityException) {
+            if (_userLocation.value == null) {
+                updateUserLocation(51.0509, 13.7373)
+            }
+        }
+    }
+
     val assistantMessages = mutableStateListOf<ChatMessage>()
     var isAssistantTyping by mutableStateOf(false)
 

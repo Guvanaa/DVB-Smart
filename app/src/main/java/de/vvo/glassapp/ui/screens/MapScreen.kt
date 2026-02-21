@@ -58,8 +58,21 @@ fun MapScreen(
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.ACCESS_COARSE_LOCATION
         ))
-        // Simulate user location for this demo
-        viewModel.updateUserLocation(51.0509, 13.7373)
+        // Try to get real location
+        try {
+            val locationManager = context.getSystemService(android.content.Context.LOCATION_SERVICE) as android.location.LocationManager
+            val location = locationManager.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
+                ?: locationManager.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
+
+            location?.let {
+                viewModel.updateUserLocation(it.latitude, it.longitude)
+            } ?: run {
+                // Fallback to center if no location found yet
+                viewModel.updateUserLocation(51.0509, 13.7373)
+            }
+        } catch (e: SecurityException) {
+            viewModel.updateUserLocation(51.0509, 13.7373)
+        }
     }
 
     var mapInstance by remember { mutableStateOf<com.mapbox.mapboxsdk.maps.MapboxMap?>(null) }
@@ -84,10 +97,12 @@ fun MapScreen(
 
     LaunchedEffect(selectedStop) {
         selectedStop?.let { stop ->
-            if (stop.lat != null && stop.lon != null) {
+            val sLat = stop.latitudeValue()
+            val sLon = stop.longitudeValue()
+            if (sLat != null && sLon != null) {
                 mapInstance?.animateCamera(
                     com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLngZoom(
-                        LatLng(stop.lat, stop.lon), 15.0
+                        LatLng(sLat, sLon), 15.0
                     )
                 )
             }
@@ -133,7 +148,7 @@ fun MapScreen(
                         else -> "marker-15"
                     }
                     manager.create(SymbolOptions()
-                        .withLatLng(LatLng(pin.lat, pin.lon))
+                        .withLatLng(LatLng(pin.latitudeValue(), pin.longitudeValue()))
                         .withTextField(pin.line)
                         .withTextSize(12f)
                         .withTextColor("#000000")
@@ -171,9 +186,11 @@ fun MapScreen(
                 android.util.Log.d("MapScreen", "Updating stop symbols: ${stops.size}")
                 manager.deleteAll()
                 stops.forEach { stop ->
-                    if (stop.lat != null && stop.lon != null) {
+                    val sLat = stop.latitudeValue()
+                    val sLon = stop.longitudeValue()
+                    if (sLat != null && sLon != null) {
                         manager.create(SymbolOptions()
-                            .withLatLng(LatLng(stop.lat, stop.lon))
+                            .withLatLng(LatLng(sLat, sLon))
                             .withIconImage("dot-11")
                             .withIconColor("#FFFFFF")
                             .withIconSize(1.5f)
@@ -190,7 +207,7 @@ fun MapScreen(
         lineManager?.let { manager ->
             manager.deleteAll()
             if (routeStops.isNotEmpty()) {
-                val points = routeStops.map { LatLng(it.lat, it.lon) }
+                val points = routeStops.map { LatLng(it.latitudeValue(), it.longitudeValue()) }
                 manager.create(LineOptions()
                     .withLatLngs(points)
                     .withLineColor("#FFCC00")
@@ -313,6 +330,7 @@ fun MapScreen(
 
         IconButton(
             onClick = {
+                viewModel.refreshLocation(context)
                 val target = userLocationState ?: LatLng(51.0509, 13.7373)
                 mapInstance?.animateCamera(
                     com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLngZoom(
@@ -338,7 +356,7 @@ fun MapScreen(
                 RouteDetailSheet(stops = routeStops, line = selectedVehicle?.line, onStopClick = { stop ->
                     mapInstance?.animateCamera(
                         com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLngZoom(
-                            LatLng(stop.lat, stop.lon), 15.0
+                            LatLng(stop.latitudeValue(), stop.longitudeValue()), 15.0
                         )
                     )
                 })

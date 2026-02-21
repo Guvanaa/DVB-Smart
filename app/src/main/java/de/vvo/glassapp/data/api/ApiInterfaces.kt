@@ -9,14 +9,16 @@ interface VvoApi {
     suspend fun searchStop(
         @Query("query") query: String,
         @Query("stopsOnly") stopsOnly: Boolean = true,
-        @Query("dvbOnly") dvbOnly: Boolean = false
+        @Query("dvbOnly") dvbOnly: Boolean = false,
+        @Query("format") format: String = "json"
     ): StopSearchResponse
 
     @GET("dm")
     suspend fun getDepartures(
         @Query("stopid") stopId: String,
         @Query("limit") limit: Int = 20,
-        @Query("mot") mot: String = "Tram,CityBus,SuburbanRailway"
+        @Query("mot") mot: String = "Tram,CityBus,SuburbanRailway,Train,Cableway,Ferry",
+        @Query("format") format: String = "json"
     ): DepartureResponse
 
     @GET("map/pins")
@@ -25,7 +27,8 @@ interface VvoApi {
         @Query("swlon") swLon: Double,
         @Query("nelat") neLat: Double,
         @Query("nelon") neLon: Double,
-        @Query("showtrips") showTrips: Boolean = true
+        @Query("showtrips") showTrips: Boolean = true,
+        @Query("format") format: String = "json"
     ): MapPinsResponse
 
     @GET("map/stops")
@@ -47,7 +50,9 @@ interface VvoApi {
         @Query("destination") destination: String,
         @Query("isarrival") isArrival: Boolean = false,
         @Query("time") time: String? = null,
-        @Query("limit") limit: Int = 5
+        @Query("limit") limit: Int = 5,
+        @Query("mot") mot: String = "Tram,CityBus,SuburbanRailway,Train,Cableway,Ferry,Footway",
+        @Query("format") format: String = "json"
     ): TripResponse
 }
 

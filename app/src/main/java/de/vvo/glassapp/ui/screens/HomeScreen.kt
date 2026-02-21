@@ -52,6 +52,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import de.vvo.glassapp.data.model.Stop
+import com.mapbox.mapboxsdk.camera.CameraPosition
 import de.vvo.glassapp.ui.components.GlassCard
 import de.vvo.glassapp.ui.theme.DvbYellow
 import de.vvo.glassapp.ui.viewmodel.TransitViewModel
@@ -59,6 +60,7 @@ import de.vvo.glassapp.ui.viewmodel.TransitViewModel
 @OptIn(ExperimentalMaterial3Api::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
 fun HomeScreen(navController: NavController) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val viewModel: TransitViewModel = viewModel(factory = TransitViewModel.Factory)
     var searchQuery by remember { mutableStateOf("") }
     val haptic = LocalHapticFeedback.current
@@ -69,6 +71,7 @@ fun HomeScreen(navController: NavController) {
     val isSearchingTrips = viewModel.isSearchingTrips
     val favorites by viewModel.favorites.collectAsState()
     val customOrigin by viewModel.customOrigin.collectAsState()
+    val userLocation by viewModel.userLocation.collectAsState()
 
     var showEditFavoriteDialog by remember { mutableStateOf<de.vvo.glassapp.ui.viewmodel.Favorite?>(null) }
     var favoriteNewName by remember { mutableStateOf("") }
@@ -76,10 +79,15 @@ fun HomeScreen(navController: NavController) {
     var selectedTime by remember { mutableStateOf<String?>(null) }
     var showTimeDialog by remember { mutableStateOf(false) }
     var timeInput by remember { mutableStateOf("") }
+    val sheetState = rememberModalBottomSheetState()
 
     var isSearchingOrigin by remember { mutableStateOf(false) }
     var originQuery by remember { mutableStateOf("") }
     val originSearchResults by viewModel.searchResults.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.refreshLocation(context)
+    }
 
     LaunchedEffect(searchQuery) {
         if (searchQuery.length >= 2) {
@@ -90,13 +98,59 @@ fun HomeScreen(navController: NavController) {
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 24.dp)
-            .statusBarsPadding(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Map Background
+        val mapView = remember { com.mapbox.mapboxsdk.maps.MapView(context) }
+        androidx.compose.runtime.DisposableEffect(mapView) {
+            mapView.onCreate(null)
+            mapView.onStart()
+            mapView.onResume()
+            onDispose {
+                mapView.onPause()
+                mapView.onStop()
+                mapView.onDestroy()
+            }
+        }
+        var mapInstance by remember { mutableStateOf<com.mapbox.mapboxsdk.maps.MapboxMap?>(null) }
+        LaunchedEffect(userLocation) {
+            userLocation?.let { loc ->
+                mapInstance?.animateCamera(com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLng(loc))
+            }
+        }
+
+        androidx.compose.ui.viewinterop.AndroidView(
+            factory = {
+                mapView.apply {
+                    getMapAsync { map ->
+                        mapInstance = map
+                        val styleUrl = "https://tiles.openfreemap.org/styles/bright"
+                        map.setStyle(styleUrl)
+                        val target = userLocation ?: com.mapbox.mapboxsdk.geometry.LatLng(51.0509, 13.7373)
+                        map.cameraPosition = com.mapbox.mapboxsdk.camera.CameraPosition.Builder()
+                            .target(target)
+                            .zoom(14.0)
+                            .build()
+                    }
+                }
+            },
+            modifier = Modifier.fillMaxSize()
+        )
+
+        // Semi-transparent overlay to improve UI contrast
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.3f))
+        )
+
+        // UI Overlay
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 24.dp)
+                .statusBarsPadding(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
         Spacer(modifier = Modifier.height(24.dp))
 
         // Clean Title
@@ -159,14 +213,14 @@ fun HomeScreen(navController: NavController) {
                 )
             ) {
                 GlassCard(
-                    modifier = Modifier.size(52.dp),
-                    shape = RoundedCornerShape(16.dp)
+                    modifier = Modifier.size(60.dp),
+                    shape = RoundedCornerShape(18.dp)
                 ) {
                     Icon(
                         Icons.Default.AutoAwesome,
                         contentDescription = "AI Assistant",
                         tint = DvbYellow,
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(36.dp)
                     )
                 }
             }
@@ -177,8 +231,8 @@ fun HomeScreen(navController: NavController) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 20.dp),
-            shape = RoundedCornerShape(22.dp),
-            padding = 12.dp
+            shape = RoundedCornerShape(24.dp),
+            padding = 16.dp
         ) {
             Column {
                 // Origin
@@ -418,11 +472,13 @@ fun HomeScreen(navController: NavController) {
 
         Spacer(modifier = Modifier.height(24.dp))
     }
+    }
 
     // Time Settings Sheet
     if (showTimeDialog) {
         ModalBottomSheet(
             onDismissRequest = { showTimeDialog = false },
+            sheetState = sheetState,
             containerColor = Color.Transparent,
             dragHandle = null
         ) {
