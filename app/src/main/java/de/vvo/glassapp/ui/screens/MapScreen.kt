@@ -64,6 +64,7 @@ fun MapScreen(
     var mapInstance by remember { mutableStateOf<com.mapbox.mapboxsdk.maps.MapboxMap?>(null) }
     var vehicleManager by remember { mutableStateOf<SymbolManager?>(null) }
     var stopManager by remember { mutableStateOf<SymbolManager?>(null) }
+    var poiManager by remember { mutableStateOf<SymbolManager?>(null) }
     var lineManager by remember { mutableStateOf<LineManager?>(null) }
 
     val pins by viewModel.mapPins.collectAsState()
@@ -135,6 +136,21 @@ fun MapScreen(
         }
     }
 
+    // POI Marker
+    LaunchedEffect(lat, lon, poiManager) {
+        poiManager?.let { manager ->
+            manager.deleteAll()
+            if (lat != null && lon != null && stopId == null) {
+                manager.create(SymbolOptions()
+                    .withLatLng(LatLng(lat, lon))
+                    .withIconImage("marker-15")
+                    .withIconColor("#007AFF")
+                    .withIconSize(1.5f)
+                )
+            }
+        }
+    }
+
     // Update stop symbols
     LaunchedEffect(stops, stopManager) {
         stopManager?.let { manager ->
@@ -203,6 +219,7 @@ fun MapScreen(
                                     true
                                 }
                             }
+                            poiManager = SymbolManager(this, mapboxMap, style)
                             lineManager = LineManager(this, mapboxMap, style)
 
                             mapboxMap.addOnMapClickListener {

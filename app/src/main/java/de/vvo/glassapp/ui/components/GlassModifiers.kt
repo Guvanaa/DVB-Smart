@@ -15,23 +15,26 @@ import androidx.compose.ui.unit.dp
 import de.vvo.glassapp.ui.theme.GlassBlack
 import de.vvo.glassapp.ui.theme.GlassWhite
 
+import androidx.compose.ui.unit.Dp
+
 @Composable
 fun Modifier.glassEffect(
     shape: RoundedCornerShape = RoundedCornerShape(28.dp),
-    borderWidth: Float = 1.5f
+    borderWidth: Float = 1.2f,
+    padding: Dp? = null
 ): Modifier {
     val isDark = isSystemInDarkTheme()
     val backgroundColor = if (isDark) GlassBlack else GlassWhite
     val borderColor = if (isDark) Color.White.copy(alpha = 0.15f) else Color.White.copy(alpha = 0.4f)
 
     return this
-        .shadow(elevation = 10.dp, shape = shape, clip = false)
+        .shadow(elevation = 12.dp, shape = shape, clip = false, spotColor = Color.Black.copy(alpha = 0.3f))
         .clip(shape)
         .background(
-            Brush.linearGradient(
+            Brush.verticalGradient(
                 colors = listOf(
-                    backgroundColor.copy(alpha = 0.4f),
-                    backgroundColor.copy(alpha = 0.2f)
+                    backgroundColor.copy(alpha = if (isDark) 0.6f else 0.5f),
+                    backgroundColor.copy(alpha = if (isDark) 0.3f else 0.2f)
                 )
             )
         )
@@ -40,10 +43,10 @@ fun Modifier.glassEffect(
             brush = Brush.linearGradient(
                 colors = listOf(
                     borderColor,
-                    borderColor.copy(alpha = 0.05f)
+                    borderColor.copy(alpha = 0.1f)
                 )
             ),
             shape = shape
         )
-        .padding(16.dp)
+        .padding(padding ?: 16.dp)
 }

@@ -15,6 +15,6 @@ val RedLate = Color(0xFFF44336)
 
 val AppleBlue = Color(0xFF007AFF)
 
-val BackgroundGradientStart = Color(0xFF1A2A6C)
-val BackgroundGradientMiddle = Color(0xFFB21F1F)
-val BackgroundGradientEnd = Color(0xFFFDBB2D)
+val BackgroundGradientStart = Color(0xFF0F172A) // Deep Navy
+val BackgroundGradientMiddle = Color(0xFF1E1B4B) // Deep Indigo
+val BackgroundGradientEnd = Color(0xFF312E81) // Indigo

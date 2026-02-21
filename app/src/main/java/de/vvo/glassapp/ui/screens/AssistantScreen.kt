@@ -56,6 +56,15 @@ fun AssistantScreen(navController: NavController) {
         }
     }
 
+    val action by remember { derivedStateOf { viewModel.assistantAction } }
+    LaunchedEffect(action) {
+        if (action == "navigate:map") {
+            kotlinx.coroutines.delay(1000)
+            viewModel.assistantAction = null
+            navController.navigate("map")
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()

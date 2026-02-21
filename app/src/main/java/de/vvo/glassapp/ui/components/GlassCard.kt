@@ -11,10 +11,11 @@ import androidx.compose.ui.unit.dp
 fun GlassCard(
     modifier: Modifier = Modifier,
     shape: RoundedCornerShape = RoundedCornerShape(24.dp),
+    padding: androidx.compose.ui.unit.Dp? = null,
     content: @Composable BoxScope.() -> Unit
 ) {
     Box(
-        modifier = modifier.glassEffect(shape = shape)
+        modifier = modifier.glassEffect(shape = shape, padding = padding)
     ) {
         content()
     }

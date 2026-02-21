@@ -35,8 +35,22 @@ class TransitViewModel(
     }
     private val TAG = "TransitViewModel"
 
-    private val _favorites = MutableStateFlow<List<Favorite>>(favoritesManager.getFavorites())
+    private val _favorites = MutableStateFlow<List<Favorite>>(emptyList())
     val favorites: StateFlow<List<Favorite>> = _favorites
+
+    init {
+        loadFavorites()
+    }
+
+    private fun loadFavorites() {
+        viewModelScope.launch {
+            try {
+                _favorites.value = favoritesManager.getFavorites()
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to load favorites", e)
+            }
+        }
+    }
 
     private val _searchResults = MutableStateFlow<List<Stop>>(emptyList())
     val searchResults: StateFlow<List<Stop>> = _searchResults
@@ -96,15 +110,22 @@ class TransitViewModel(
         }
     }
 
+    var assistantAction by mutableStateOf<String?>(null)
+
     private suspend fun processAssistantInput(input: String, context: android.content.Context): String {
         val lowInput = input.lowercase()
         return when {
             lowInput.contains("hallo") || lowInput.contains("hi") || lowInput.contains("hey") ->
                 context.getString(de.vvo.glassapp.R.string.assistant_initial_response)
 
+            lowInput.contains("karte") || lowInput.contains("map") || lowInput.contains("wo bin ich") -> {
+                assistantAction = "navigate:map"
+                "Natürlich! Ich öffne die Karte für dich."
+            }
+
             lowInput.contains("abfahrt") || lowInput.contains("wann") || lowInput.contains("nächste") -> {
                 val query = input.replace("abfahrt", "").replace("wann", "").replace("nächste", "").trim()
-                val stops = if (query.length > 2) repository.searchStops(query) else emptyList()
+                val stops = if (query.length > 1) repository.searchStops(query) else emptyList()
                 if (stops.isNotEmpty()) {
                     val targetStop = stops.first()
                     val departures = repository.getDepartures(targetStop.id)
@@ -119,8 +140,16 @@ class TransitViewModel(
                 }
             }
 
-            lowInput.contains("verspätung") || lowInput.contains("stau") -> context.getString(de.vvo.glassapp.R.string.assistant_delay_info)
-            lowInput.contains("danke") -> context.getString(de.vvo.glassapp.R.string.assistant_thanks_response)
+            lowInput.contains("verspätung") || lowInput.contains("stau") || lowInput.contains("probleme") ->
+                context.getString(de.vvo.glassapp.R.string.assistant_delay_info)
+
+            lowInput.contains("favoriten") || lowInput.contains("stern") -> {
+                "Deine Favoriten sind: " + _favorites.value.joinToString { it.name }
+            }
+
+            lowInput.contains("danke") || lowInput.contains("super") || lowInput.contains("cool") ->
+                context.getString(de.vvo.glassapp.R.string.assistant_thanks_response)
+
             else -> context.getString(de.vvo.glassapp.R.string.assistant_fallback)
         }
     }

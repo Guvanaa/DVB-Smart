@@ -7,6 +7,8 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Search
@@ -17,23 +19,28 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import de.vvo.glassapp.R
+import androidx.compose.ui.res.painterResource
 import de.vvo.glassapp.data.model.Stop
 import de.vvo.glassapp.ui.components.GlassCard
 import de.vvo.glassapp.ui.theme.DvbYellow
 import de.vvo.glassapp.ui.viewmodel.TransitViewModel
 
+@OptIn(ExperimentalMaterial3Api::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
 fun HomeScreen(navController: NavController) {
     val viewModel: TransitViewModel = viewModel(factory = TransitViewModel.Factory)
     var searchQuery by remember { mutableStateOf("") }
+    val keyboardController = LocalSoftwareKeyboardController.current
     val searchResults by viewModel.searchResults.collectAsState()
     val locationResults by viewModel.locationResults.collectAsState()
     val trips by viewModel.trips.collectAsState()
@@ -43,24 +50,47 @@ fun HomeScreen(navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(20.dp)
-            .statusBarsPadding()
+            .padding(horizontal = 24.dp)
+            .statusBarsPadding(),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Centered Logo and Name
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_logo),
+                contentDescription = null,
+                tint = Color.Unspecified,
+                modifier = Modifier.size(100.dp)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "DVB-Smart",
+                fontSize = 38.sp,
+                fontWeight = FontWeight.Black,
+                color = Color.White,
+                letterSpacing = (-1).sp
+            )
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+
         Row(
-            modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
+            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "DVB-Smart",
-                fontSize = 34.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = Color.White
+                text = stringResource(R.string.search_hint),
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White.copy(alpha = 0.9f)
             )
             IconButton(
                 onClick = { navController.navigate("assistant") }
             ) {
-                GlassCard(modifier = Modifier.size(44.dp)) {
+                GlassCard(modifier = Modifier.size(48.dp), shape = RoundedCornerShape(14.dp)) {
                     Icon(
                         Icons.Default.AutoAwesome,
                         contentDescription = "AI Assistant",
@@ -75,20 +105,25 @@ fun HomeScreen(navController: NavController) {
         GlassCard(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 24.dp),
-            shape = RoundedCornerShape(20.dp)
+                .padding(bottom = 20.dp),
+            shape = RoundedCornerShape(18.dp),
+            padding = 4.dp
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
             ) {
-                Icon(Icons.Default.Search, contentDescription = null, tint = Color.White.copy(alpha = 0.7f))
                 Spacer(modifier = Modifier.width(12.dp))
-                Box(contentAlignment = Alignment.CenterStart) {
+                Icon(Icons.Default.Search, contentDescription = null, tint = Color.White.copy(alpha = 0.6f))
+                Spacer(modifier = Modifier.width(12.dp))
+                Box(
+                    contentAlignment = Alignment.CenterStart,
+                    modifier = Modifier.weight(1f)
+                ) {
                     if (searchQuery.isEmpty()) {
                         Text(
-                            text = stringResource(R.string.search_hint),
-                            color = Color.White.copy(alpha = 0.5f),
+                            text = "Haltestelle suchen...",
+                            color = Color.White.copy(alpha = 0.4f),
                             fontSize = 16.sp
                         )
                     }
@@ -96,11 +131,36 @@ fun HomeScreen(navController: NavController) {
                         value = searchQuery,
                         onValueChange = {
                             searchQuery = it
-                            if (it.length > 2) viewModel.searchStops(it)
+                            if (it.isEmpty()) {
+                                viewModel.searchStops("")
+                            }
                         },
                         textStyle = TextStyle(color = Color.White, fontSize = 16.sp),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        keyboardActions = KeyboardActions(onSearch = {
+                            if (searchQuery.isNotEmpty()) {
+                                viewModel.searchStops(searchQuery)
+                                keyboardController?.hide()
+                            }
+                        })
                     )
+                }
+
+                if (searchQuery.isNotEmpty()) {
+                    IconButton(
+                        onClick = {
+                            viewModel.searchStops(searchQuery)
+                            keyboardController?.hide()
+                        },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = "Search",
+                            tint = DvbYellow
+                        )
+                    }
                 }
             }
         }
@@ -180,8 +240,9 @@ fun HomeScreen(navController: NavController) {
         Text(
             text = stringResource(R.string.developed_by),
             color = Color.White.copy(alpha = 0.4f),
-            fontSize = 12.sp,
-            modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 8.dp)
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.padding(top = 12.dp, bottom = 8.dp)
         )
     }
 }
@@ -238,18 +299,32 @@ fun GlassSearchResultItem(
 fun FavoriteItem(favorite: de.vvo.glassapp.ui.viewmodel.Favorite, onClick: () -> Unit) {
     GlassCard(
         modifier = Modifier
-            .size(110.dp)
+            .width(110.dp)
+            .height(100.dp)
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(22.dp)
+        shape = RoundedCornerShape(22.dp),
+        padding = 0.dp
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize().padding(8.dp)
         ) {
-            Icon(Icons.Filled.Star, contentDescription = null, tint = DvbYellow, modifier = Modifier.size(32.dp))
+            Icon(
+                imageVector = Icons.Filled.Star,
+                contentDescription = null,
+                tint = DvbYellow,
+                modifier = Modifier.size(28.dp)
+            )
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = favorite.name, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Text(
+                text = favorite.name,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                maxLines = 1,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
         }
     }
 }
