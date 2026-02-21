@@ -28,6 +28,14 @@ interface VvoApi {
         @Query("showtrips") showTrips: Boolean = true
     ): MapPinsResponse
 
+    @GET("map/stops")
+    suspend fun getStopsInArea(
+        @Query("swlat") swLat: Double,
+        @Query("swlon") swLon: Double,
+        @Query("nelat") neLat: Double,
+        @Query("nelon") neLon: Double
+    ): MapStopsResponse
+
     @GET("map/route")
     suspend fun getRoute(
         @Query("tripid") tripId: String

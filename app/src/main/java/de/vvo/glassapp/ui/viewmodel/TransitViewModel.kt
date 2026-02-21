@@ -50,6 +50,12 @@ class TransitViewModel(
     private val _mapPins = MutableStateFlow<List<VehiclePin>>(emptyList())
     val mapPins: StateFlow<List<VehiclePin>> = _mapPins
 
+    private val _mapStops = MutableStateFlow<List<Stop>>(emptyList())
+    val mapStops: StateFlow<List<Stop>> = _mapStops
+
+    private val _selectedStop = MutableStateFlow<Stop?>(null)
+    val selectedStop: StateFlow<Stop?> = _selectedStop
+
     private val _selectedVehicleRoute = MutableStateFlow<List<StopPoint>>(emptyList())
     val selectedVehicleRoute: StateFlow<List<StopPoint>> = _selectedVehicleRoute
 
@@ -131,13 +137,15 @@ class TransitViewModel(
         }
     }
 
-    fun loadMapPins(swLat: Double, swLon: Double, neLat: Double, neLon: Double) {
+    fun loadMapData(swLat: Double, swLon: Double, neLat: Double, neLon: Double) {
         viewModelScope.launch {
             try {
                 val pins = repository.getMapPins(swLat, swLon, neLat, neLon)
                 _mapPins.value = pins
+                val stops = repository.getStopsInArea(swLat, swLon, neLat, neLon)
+                _mapStops.value = stops
             } catch (e: Exception) {
-                Log.e(TAG, "Map pins load failed", e)
+                Log.e(TAG, "Map data load failed", e)
             }
         }
     }
@@ -154,8 +162,26 @@ class TransitViewModel(
         favoritesManager.saveFavorites(current)
     }
 
+    fun selectStop(stop: Stop) {
+        _selectedStop.value = stop
+        _selectedVehicle.value = null
+        _selectedVehicleRoute.value = emptyList()
+        viewModelScope.launch {
+            try {
+                if (stop.lat == null) {
+                    val search = repository.searchStops(stop.id)
+                    search.find { it.id == stop.id }?.let { _selectedStop.value = it }
+                }
+                _departures.value = repository.getDepartures(stop.id)
+            } catch (e: Exception) {
+                Log.e(TAG, "Departures load failed", e)
+            }
+        }
+    }
+
     fun selectVehicle(vehicle: VehiclePin) {
         _selectedVehicle.value = vehicle
+        _selectedStop.value = null
         _selectedVehicleRoute.value = emptyList()
         viewModelScope.launch {
             try {
@@ -166,8 +192,9 @@ class TransitViewModel(
         }
     }
 
-    fun deselectVehicle() {
+    fun deselectAll() {
         _selectedVehicle.value = null
+        _selectedStop.value = null
         _selectedVehicleRoute.value = emptyList()
     }
 

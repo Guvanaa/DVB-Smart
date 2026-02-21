@@ -22,6 +22,10 @@ class TransitRepository(
         vvoApi.getMapPins(swLat, swLon, neLat, neLon).pins
     }
 
+    suspend fun getStopsInArea(swLat: Double, swLon: Double, neLat: Double, neLon: Double) = withContext(Dispatchers.IO) {
+        vvoApi.getStopsInArea(swLat, swLon, neLat, neLon).stops
+    }
+
     suspend fun getRoute(tripId: String) = withContext(Dispatchers.IO) {
         vvoApi.getRoute(tripId).stops
     }

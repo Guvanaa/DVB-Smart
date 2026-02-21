@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -47,10 +48,12 @@ fun RouteDetailSheet(stops: List<StopPoint>, onStopClick: (StopPoint) -> Unit) {
             } else {
                 LazyColumn {
                     itemsIndexed(stops) { index, stop ->
+                        // Simple logic for isPassed (if time is provided and it's not the first/last, normally API would handle this but we can approximate)
                         ThermometerStopItem(
                             stop = stop,
                             isFirst = index == 0,
                             isLast = index == stops.size - 1,
+                            isPassed = false, // In a real app, calculate based on vehicle position
                             onClick = { onStopClick(stop) }
                         )
                     }
@@ -65,13 +68,16 @@ fun ThermometerStopItem(
     stop: StopPoint,
     isFirst: Boolean,
     isLast: Boolean,
+    isPassed: Boolean = false,
     onClick: () -> Unit
 ) {
+    val opacity = if (isPassed) 0.5f else 1f
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(vertical = 6.dp),
+            .padding(vertical = 6.dp)
+            .alpha(opacity),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Thermometer Line and Dot

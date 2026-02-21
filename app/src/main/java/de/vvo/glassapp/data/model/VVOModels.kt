@@ -49,6 +49,10 @@ data class MapPinsResponse(
     @SerializedName("Pins") val pins: List<VehiclePin>
 )
 
+data class MapStopsResponse(
+    @SerializedName("Stops") val stops: List<Stop>
+)
+
 data class StopPoint(
     @SerializedName("Name") val name: String,
     @SerializedName("Lat") val lat: Double,

@@ -62,12 +62,34 @@ fun MapScreen(
     }
 
     var mapInstance by remember { mutableStateOf<com.mapbox.mapboxsdk.maps.MapboxMap?>(null) }
-    var symbolManager by remember { mutableStateOf<SymbolManager?>(null) }
+    var vehicleManager by remember { mutableStateOf<SymbolManager?>(null) }
+    var stopManager by remember { mutableStateOf<SymbolManager?>(null) }
     var lineManager by remember { mutableStateOf<LineManager?>(null) }
 
     val pins by viewModel.mapPins.collectAsState()
+    val stops by viewModel.mapStops.collectAsState()
+    val departures by viewModel.departures.collectAsState()
     val selectedVehicle by viewModel.selectedVehicle.collectAsState()
+    val selectedStop by viewModel.selectedStop.collectAsState()
     val routeStops by viewModel.selectedVehicleRoute.collectAsState()
+
+    LaunchedEffect(stopId) {
+        stopId?.let { id ->
+            viewModel.selectStop(de.vvo.glassapp.data.model.Stop(id, "", null, null, null))
+        }
+    }
+
+    LaunchedEffect(selectedStop) {
+        selectedStop?.let { stop ->
+            if (stop.lat != null && stop.lon != null) {
+                mapInstance?.animateCamera(
+                    com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLngZoom(
+                        LatLng(stop.lat, stop.lon), 15.0
+                    )
+                )
+            }
+        }
+    }
 
     LaunchedEffect(Unit) {
         try {
@@ -75,14 +97,14 @@ fun MapScreen(
         } catch (e: Exception) { }
 
         while(true) {
-            viewModel.loadMapPins(51.0, 13.6, 51.1, 13.9)
+            viewModel.loadMapData(51.0, 13.6, 51.1, 13.9)
             delay(10000)
         }
     }
 
-    // Update symbols
-    LaunchedEffect(pins, symbolManager) {
-        symbolManager?.let { manager ->
+    // Update vehicle symbols
+    LaunchedEffect(pins, vehicleManager) {
+        vehicleManager?.let { manager ->
             try {
                 manager.deleteAll()
                 pins.forEach { pin ->
@@ -106,8 +128,28 @@ fun MapScreen(
                         .withTextHaloWidth(2.0f)
                         .withIconImage(icon)
                         .withIconColor(color)
-                        .withData(com.google.gson.JsonPrimitive(pin.id))
+                        .withData(com.google.gson.JsonPrimitive("v_${pin.id}"))
                     )
+                }
+            } catch (e: Exception) { }
+        }
+    }
+
+    // Update stop symbols
+    LaunchedEffect(stops, stopManager) {
+        stopManager?.let { manager ->
+            try {
+                manager.deleteAll()
+                stops.forEach { stop ->
+                    if (stop.lat != null && stop.lon != null) {
+                        manager.create(SymbolOptions()
+                            .withLatLng(LatLng(stop.lat, stop.lon))
+                            .withIconImage("dot-11")
+                            .withIconColor("#FFFFFF")
+                            .withIconSize(1.2f)
+                            .withData(com.google.gson.JsonPrimitive("s_${stop.id}"))
+                        )
+                    }
                 }
             } catch (e: Exception) { }
         }
@@ -138,16 +180,44 @@ fun MapScreen(
                         mapInstance = mapboxMap
                         val styleUrl = "https://demotiles.maplibre.org/style.json"
                         mapboxMap.setStyle(styleUrl) { style ->
-                            symbolManager = SymbolManager(this, mapboxMap, style).apply {
+                            vehicleManager = SymbolManager(this, mapboxMap, style).apply {
                                 iconAllowOverlap = true
                                 textAllowOverlap = true
                                 addClickListener { symbol ->
-                                    val vehicleId = symbol.data?.asString
-                                    pins.find { it.id == vehicleId }?.let { viewModel.selectVehicle(it) }
+                                    val data = symbol.data?.asString
+                                    if (data?.startsWith("v_") == true) {
+                                        val vehicleId = data.removePrefix("v_")
+                                        pins.find { it.id == vehicleId }?.let { viewModel.selectVehicle(it) }
+                                    }
+                                    true
+                                }
+                            }
+                            stopManager = SymbolManager(this, mapboxMap, style).apply {
+                                iconAllowOverlap = true
+                                addClickListener { symbol ->
+                                    val data = symbol.data?.asString
+                                    if (data?.startsWith("s_") == true) {
+                                        val stopId = data.removePrefix("s_")
+                                        stops.find { it.id == stopId }?.let { viewModel.selectStop(it) }
+                                    }
                                     true
                                 }
                             }
                             lineManager = LineManager(this, mapboxMap, style)
+
+                            mapboxMap.addOnMapClickListener {
+                                viewModel.deselectAll()
+                                true
+                            }
+
+                            try {
+                                val locationComponent = mapboxMap.locationComponent
+                                locationComponent.activateLocationComponent(
+                                    com.mapbox.mapboxsdk.location.LocationComponentActivationOptions.builder(context, style).build()
+                                )
+                                locationComponent.isLocationComponentEnabled = true
+                                locationComponent.renderMode = com.mapbox.mapboxsdk.location.modes.RenderMode.COMPASS
+                            } catch (e: Exception) { }
                         }
                         val target = if (lat != null && lon != null) {
                             LatLng(lat, lon)
@@ -205,7 +275,19 @@ fun MapScreen(
                     )
                 })
                 IconButton(
-                    onClick = { viewModel.deselectVehicle() },
+                    onClick = { viewModel.deselectAll() },
+                    modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
+                ) {
+                    Text("✕", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                }
+            }
+        } else if (selectedStop != null) {
+            Box(
+                modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(16.dp).navigationBarsPadding()
+            ) {
+                StopDetailSheet(stop = selectedStop!!, departures = departures)
+                IconButton(
+                    onClick = { viewModel.deselectAll() },
                     modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
                 ) {
                     Text("✕", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 20.sp)
