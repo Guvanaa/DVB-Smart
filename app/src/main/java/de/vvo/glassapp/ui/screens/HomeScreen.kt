@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
@@ -22,12 +23,21 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.DirectionsWalk
+import androidx.compose.material.icons.filled.SwapVert
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Work
+import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.Train
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.animation.core.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -66,6 +76,10 @@ fun HomeScreen(navController: NavController) {
     var selectedTime by remember { mutableStateOf<String?>(null) }
     var showTimeDialog by remember { mutableStateOf(false) }
     var timeInput by remember { mutableStateOf("") }
+
+    var isSearchingOrigin by remember { mutableStateOf(false) }
+    var originQuery by remember { mutableStateOf("") }
+    val originSearchResults by viewModel.searchResults.collectAsState()
 
     LaunchedEffect(searchQuery) {
         if (searchQuery.length >= 2) {
@@ -115,15 +129,44 @@ fun HomeScreen(navController: NavController) {
                 fontWeight = FontWeight.Bold,
                 color = Color.White.copy(alpha = 0.9f)
             )
+            val infiniteTransition = androidx.compose.animation.core.rememberInfiniteTransition()
+            val scale by infiniteTransition.animateFloat(
+                initialValue = 1f,
+                targetValue = 1.12f,
+                animationSpec = androidx.compose.animation.core.infiniteRepeatable(
+                    animation = androidx.compose.animation.core.tween(1200, easing = LinearEasing),
+                    repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
+                )
+            )
+            val offsetY by infiniteTransition.animateFloat(
+                initialValue = 0f,
+                targetValue = -5f,
+                animationSpec = androidx.compose.animation.core.infiniteRepeatable(
+                    animation = androidx.compose.animation.core.tween(2000, easing = FastOutSlowInEasing),
+                    repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
+                )
+            )
+
             IconButton(
-                onClick = { navController.navigate("assistant") }
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    navController.navigate("assistant")
+                },
+                modifier = Modifier.graphicsLayer(
+                    scaleX = scale,
+                    scaleY = scale,
+                    translationY = offsetY
+                )
             ) {
-                GlassCard(modifier = Modifier.size(48.dp), shape = RoundedCornerShape(14.dp)) {
+                GlassCard(
+                    modifier = Modifier.size(52.dp),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
                     Icon(
                         Icons.Default.AutoAwesome,
                         contentDescription = "AI Assistant",
                         tint = DvbYellow,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(28.dp)
                     )
                 }
             }
@@ -140,17 +183,38 @@ fun HomeScreen(navController: NavController) {
             Column {
                 // Origin
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.MyLocation, contentDescription = null, tint = DvbYellow, modifier = Modifier.size(20.dp))
+                    Icon(
+                        imageVector = if (customOrigin == null) Icons.Default.MyLocation else Icons.Default.Place,
+                        contentDescription = null,
+                        tint = DvbYellow,
+                        modifier = Modifier.size(20.dp)
+                    )
                     Spacer(modifier = Modifier.width(12.dp))
-                    Box(modifier = Modifier.weight(1f)) {
-                        if (customOrigin == null) {
-                            Text("Mein Standort", color = Color.White.copy(alpha = 0.6f), fontSize = 16.sp)
-                        } else {
-                            Text(customOrigin!!.name, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                        if (originQuery.isEmpty() && customOrigin == null) {
+                            Text("Mein Standort (oder Start suchen...)", color = Color.White.copy(alpha = 0.4f), fontSize = 16.sp)
                         }
+                        BasicTextField(
+                            value = if (customOrigin != null && originQuery.isEmpty()) customOrigin!!.name else originQuery,
+                            onValueChange = {
+                                originQuery = it
+                                isSearchingOrigin = it.isNotEmpty()
+                                if (it.isNotEmpty()) viewModel.searchStops(it)
+                            },
+                            textStyle = TextStyle(
+                                color = if (customOrigin != null && originQuery.isEmpty()) DvbYellow else Color.White,
+                                fontSize = 16.sp,
+                                fontWeight = if (customOrigin != null) FontWeight.Bold else FontWeight.Normal
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
-                    if (customOrigin != null) {
-                        IconButton(onClick = { viewModel.setCustomOrigin(null) }, modifier = Modifier.size(24.dp)) {
+                    if (customOrigin != null || originQuery.isNotEmpty()) {
+                        IconButton(onClick = {
+                            viewModel.setCustomOrigin(null)
+                            originQuery = ""
+                            isSearchingOrigin = false
+                        }, modifier = Modifier.size(24.dp)) {
                             Text("✕", color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp)
                         }
                     }
@@ -184,15 +248,18 @@ fun HomeScreen(navController: NavController) {
 
                 // Destination / Search
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Search, contentDescription = null, tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(20.dp))
+                    Icon(Icons.Default.Place, contentDescription = null, tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(20.dp))
                     Spacer(modifier = Modifier.width(12.dp))
                     Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
                         if (searchQuery.isEmpty()) {
-                            Text("Ziel oder Haltestelle...", color = Color.White.copy(alpha = 0.4f), fontSize = 16.sp)
+                            Text("Ziel suchen...", color = Color.White.copy(alpha = 0.4f), fontSize = 16.sp)
                         }
                         BasicTextField(
                             value = searchQuery,
-                            onValueChange = { searchQuery = it },
+                            onValueChange = {
+                                searchQuery = it
+                                isSearchingOrigin = false
+                            },
                             textStyle = TextStyle(color = Color.White, fontSize = 16.sp),
                             modifier = Modifier.fillMaxWidth(),
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
@@ -209,16 +276,17 @@ fun HomeScreen(navController: NavController) {
         }
 
         AnimatedVisibility(
-            visible = searchQuery.isNotEmpty(),
+            visible = searchQuery.isNotEmpty() || originQuery.isNotEmpty(),
             enter = fadeIn() + expandVertically(),
             exit = fadeOut() + shrinkVertically(),
             modifier = Modifier.weight(1f)
         ) {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 item {
-                    SectionHeader("Haltestellen")
+                    SectionHeader(if (isSearchingOrigin) "Start wählen" else "Haltestellen")
                 }
-                items(searchResults) { stop ->
+                val results = if (isSearchingOrigin) originSearchResults else searchResults
+                items(results) { stop ->
                     GlassSearchResultItem(
                         title = stop.name,
                         subtitle = stop.place ?: "Dresden",
@@ -226,14 +294,18 @@ fun HomeScreen(navController: NavController) {
                         onFavoriteClick = { viewModel.toggleFavorite(stop.name, stop.id) }
                     ) {
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        if (customOrigin == null) {
-                            // Show options: Map or Set as Origin
-                            viewModel.selectStop(stop)
-                            navController.navigate("map/${stop.id}")
+                        if (isSearchingOrigin) {
+                            viewModel.setCustomOrigin(stop)
+                            originQuery = ""
+                            isSearchingOrigin = false
                         } else {
-                            // Already have origin, this is destination
-                            viewModel.findTrips(customOrigin!!.id, stop.id, selectedTime, isArrivalMode)
-                            searchQuery = ""
+                            if (customOrigin == null) {
+                                viewModel.selectStop(stop)
+                                navController.navigate("map/${stop.id}")
+                            } else {
+                                viewModel.findTrips(customOrigin!!.id, stop.id, selectedTime, isArrivalMode)
+                                searchQuery = ""
+                            }
                         }
                     }
                 }
@@ -241,12 +313,33 @@ fun HomeScreen(navController: NavController) {
                     SectionHeader("Adressen & Orte")
                 }
                 items(locationResults) { feature ->
-                    GlassSearchResultItem(feature.properties.name, feature.properties.city ?: "") {
+                    GlassSearchResultItem(
+                        title = feature.properties.name,
+                        subtitle = feature.properties.city ?: "Dresden",
+                        icon = Icons.Default.Place
+                    ) {
                         val coords = feature.geometry.coordinates
                         if (coords.size >= 2) {
-                            navController.navigate("map/${coords[1]}/${coords[0]}")
-                        } else {
-                            navController.navigate("map")
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            val stop = de.vvo.glassapp.data.model.Stop(
+                                id = "coord:${coords[0]}:${coords[1]}",
+                                name = feature.properties.name,
+                                place = feature.properties.city,
+                                lat = coords[1],
+                                lon = coords[0]
+                            )
+                            if (isSearchingOrigin) {
+                                viewModel.setCustomOrigin(stop)
+                                originQuery = ""
+                                isSearchingOrigin = false
+                            } else {
+                                if (customOrigin == null) {
+                                    navController.navigate("map/${coords[1]}/${coords[0]}")
+                                } else {
+                                    viewModel.findTrips(customOrigin!!.id, stop.id, selectedTime, isArrivalMode)
+                                    searchQuery = ""
+                                }
+                            }
                         }
                     }
                 }
@@ -326,57 +419,99 @@ fun HomeScreen(navController: NavController) {
         Spacer(modifier = Modifier.height(24.dp))
     }
 
-        // Time Dialog
-        if (showTimeDialog) {
-            AlertDialog(
-                onDismissRequest = { showTimeDialog = false },
-                title = { Text("Uhrzeit festlegen") },
-                text = {
-                    Column {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            RadioButton(selected = !isArrivalMode, onClick = { isArrivalMode = false })
-                            Text("Abfahrt", color = Color.Black)
-                            Spacer(modifier = Modifier.width(16.dp))
-                            RadioButton(selected = isArrivalMode, onClick = { isArrivalMode = true })
-                            Text("Ankunft", color = Color.Black)
+    // Time Settings Sheet
+    if (showTimeDialog) {
+        ModalBottomSheet(
+            onDismissRequest = { showTimeDialog = false },
+            containerColor = Color.Transparent,
+            dragHandle = null
+        ) {
+            GlassCard(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                shape = RoundedCornerShape(32.dp),
+                padding = 24.dp
+            ) {
+                Column {
+                    Text("Reisezeit planen", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Button(
+                            onClick = { isArrivalMode = false },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (!isArrivalMode) DvbYellow else Color.White.copy(alpha = 0.1f)
+                            ),
+                            shape = RoundedCornerShape(14.dp)
+                        ) {
+                            Text("Abfahrt", color = if (!isArrivalMode) Color.Black else Color.White)
                         }
-                        Spacer(modifier = Modifier.height(16.dp))
-                        OutlinedTextField(
-                            value = timeInput,
-                            onValueChange = { timeInput = it },
-                            label = { Text("Zeit (HH:mm)") },
-                            placeholder = { Text("z.B. 14:30") },
-                            modifier = Modifier.fillMaxWidth()
+                        Button(
+                            onClick = { isArrivalMode = true },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isArrivalMode) DvbYellow else Color.White.copy(alpha = 0.1f)
+                            ),
+                            shape = RoundedCornerShape(14.dp)
+                        ) {
+                            Text("Ankunft", color = if (isArrivalMode) Color.Black else Color.White)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    OutlinedTextField(
+                        value = timeInput,
+                        onValueChange = { timeInput = it },
+                        label = { Text("Zeit (z.B. 14:30)", color = Color.White.copy(alpha = 0.6f)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        textStyle = TextStyle(color = Color.White, fontSize = 18.sp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = DvbYellow,
+                            unfocusedBorderColor = Color.White.copy(alpha = 0.3f)
                         )
-                        TextButton(onClick = {
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Button(
+                        onClick = {
+                            if (timeInput.contains(":")) {
+                                selectedTime = timeInput
+                            } else {
+                                selectedTime = null
+                            }
+                            showTimeDialog = false
+                        },
+                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = DvbYellow),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Text("Fertig", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    }
+
+                    TextButton(
+                        onClick = {
                             selectedTime = null
                             timeInput = ""
                             showTimeDialog = false
-                        }) {
-                            Text("Jetzt abfahren")
-                        }
-                    }
-                },
-                confirmButton = {
-                    TextButton(onClick = {
-                        if (timeInput.contains(":")) {
-                            selectedTime = timeInput
-                        }
-                        showTimeDialog = false
-                    }) {
-                        Text("Übernehmen")
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showTimeDialog = false }) {
-                        Text("Abbrechen")
+                        },
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    ) {
+                        Text("Jetzt abfahren", color = Color.White.copy(alpha = 0.6f))
                     }
                 }
-            )
+            }
         }
+    }
 
     // Edit Favorite Dialog
-    if (showEditFavoriteDialog != null) {
+    val currentEditingFavorite = favorites.find { it.stopId == showEditFavoriteDialog?.stopId }
+    if (showEditFavoriteDialog != null && currentEditingFavorite != null) {
         AlertDialog(
             onDismissRequest = { showEditFavoriteDialog = null },
             title = { Text("Favorit bearbeiten") },
@@ -386,9 +521,35 @@ fun HomeScreen(navController: NavController) {
                         value = favoriteNewName,
                         onValueChange = { favoriteNewName = it },
                         label = { Text("Name") },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        textStyle = TextStyle(color = Color.Black)
                     )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Icon wählen", fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(8.dp))
+                    val icons = listOf("Star", "Home", "Work", "School", "Train", "Place")
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        icons.forEach { iconName ->
+                            val iconVector = when(iconName) {
+                                "Work" -> Icons.Default.Work
+                                "Home" -> Icons.Default.Home
+                                "School" -> Icons.Default.School
+                                "Train" -> Icons.Default.Train
+                                "Place" -> Icons.Default.Place
+                                else -> Icons.Filled.Star
+                            }
+                            IconButton(
+                                onClick = { viewModel.updateFavoriteIcon(currentEditingFavorite.stopId, iconName) },
+                                modifier = Modifier.size(40.dp).background(
+                                    if (currentEditingFavorite.iconName == iconName) DvbYellow.copy(alpha = 0.2f) else Color.Transparent,
+                                    CircleShape
+                                )
+                            ) {
+                                Icon(iconVector, contentDescription = null, tint = if (currentEditingFavorite.iconName == iconName) DvbYellow else Color.Gray)
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
                     Button(
                         onClick = {
                             viewModel.toggleFavorite(showEditFavoriteDialog!!.name, showEditFavoriteDialog!!.stopId)
@@ -433,6 +594,7 @@ fun SectionHeader(title: String) {
 fun GlassSearchResultItem(
     title: String,
     subtitle: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector = Icons.Default.DirectionsWalk,
     isFavorite: Boolean = false,
     onFavoriteClick: (() -> Unit)? = null,
     onClick: () -> Unit
@@ -449,6 +611,12 @@ fun GlassSearchResultItem(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = DvbYellow,
+                modifier = Modifier.size(24.dp).padding(end = 12.dp)
+            )
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = title, fontWeight = FontWeight.Bold, color = Color.White)
                 Text(text = subtitle, fontSize = 13.sp, color = Color.White.copy(alpha = 0.7f))
@@ -490,6 +658,14 @@ fun FavoriteItem(
                 verticalArrangement = Arrangement.Center,
                 modifier = Modifier.fillMaxSize().padding(8.dp)
             ) {
+                val icon = when(favorite.iconName) {
+                    "Work" -> Icons.Default.Work
+                    "Home" -> Icons.Default.Home
+                    "School" -> Icons.Default.School
+                    "Train" -> Icons.Default.Train
+                    "Place" -> Icons.Default.Place
+                    else -> Icons.Filled.Star
+                }
                 Surface(
                     color = Color.White.copy(alpha = 0.15f),
                     shape = CircleShape,
@@ -497,7 +673,7 @@ fun FavoriteItem(
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
-                            imageVector = Icons.Filled.Star,
+                            imageVector = icon,
                             contentDescription = null,
                             tint = DvbYellow,
                             modifier = Modifier.size(24.dp)
@@ -542,28 +718,41 @@ fun TripItem(trip: de.vvo.glassapp.data.model.Trip, navController: NavController
             if (trip.sections != null && trip.sections.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    trip.sections.filter { it.line != null }.forEachIndexed { index, section ->
-                        Surface(
-                            color = DvbYellow,
-                            shape = RoundedCornerShape(4.dp),
-                            modifier = Modifier
-                                .padding(end = 4.dp)
-                                .clickable {
-                                    // Navigate to map and focus on this vehicle/route if possible
-                                    // For now just show map
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    navController.navigate("map")
-                                }
-                        ) {
-                            Text(
-                                text = section.line!!,
-                                color = Color.Black,
-                                fontWeight = FontWeight.Bold,
+                    trip.sections.forEachIndexed { index, section ->
+                        if (section.line != null) {
+                            Surface(
+                                color = DvbYellow,
+                                shape = RoundedCornerShape(4.dp),
+                                modifier = Modifier
+                                    .padding(end = 4.dp)
+                                    .clickable {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        navController.navigate("map")
+                                    }
+                            ) {
+                                Text(
+                                    text = section.line!!,
+                                    color = Color.Black,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 10.sp,
+                                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                                )
+                            }
+                        } else if (section.type == "Footway" || section.type == "Walking") {
+                             Icon(
+                                Icons.Default.DirectionsWalk,
+                                contentDescription = null,
+                                tint = Color.White.copy(alpha = 0.5f),
+                                modifier = Modifier.size(14.dp).padding(end = 2.dp)
+                             )
+                             Text(
+                                "${section.duration ?: 0}m",
+                                color = Color.White.copy(alpha = 0.5f),
                                 fontSize = 10.sp,
-                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
-                            )
+                                modifier = Modifier.padding(end = 4.dp)
+                             )
                         }
-                        if (index < trip.sections.filter { it.line != null }.size - 1) {
+                        if (index < trip.sections.size - 1) {
                             Text(">", color = Color.White.copy(alpha = 0.3f), fontSize = 10.sp, modifier = Modifier.padding(end = 4.dp))
                         }
                     }

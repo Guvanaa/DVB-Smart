@@ -313,9 +313,10 @@ fun MapScreen(
 
         IconButton(
             onClick = {
+                val target = userLocationState ?: LatLng(51.0509, 13.7373)
                 mapInstance?.animateCamera(
                     com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLngZoom(
-                        LatLng(51.0509, 13.7373), 15.0
+                        target, 15.0
                     )
                 )
             },

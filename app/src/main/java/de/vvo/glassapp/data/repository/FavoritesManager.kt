@@ -12,12 +12,16 @@ class FavoritesManager(context: Context) {
 
     fun getFavorites(): List<Favorite> {
         val json = prefs.getString("favorites_list", null) ?: return listOf(
-            Favorite("Arbeit", "33000028"),
-            Favorite("Zuhause", "33000037"),
-            Favorite("Hbf", "33000028")
+            Favorite("Arbeit", "33000028", "Work"),
+            Favorite("Zuhause", "33000037", "Home"),
+            Favorite("Hbf", "33000028", "Train")
         )
         val type = object : TypeToken<List<Favorite>>() {}.type
-        return gson.fromJson(json, type)
+        return try {
+            gson.fromJson(json, type)
+        } catch (e: Exception) {
+            emptyList()
+        }
     }
 
     fun saveFavorites(favorites: List<Favorite>) {

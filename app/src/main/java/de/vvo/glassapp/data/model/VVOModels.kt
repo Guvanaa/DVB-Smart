@@ -80,7 +80,8 @@ data class Trip(
 data class Section(
     @SerializedName("Type") val type: String,
     @SerializedName("Line") val line: String? = null,
-    @SerializedName("Direction") val direction: String? = null
+    @SerializedName("Direction") val direction: String? = null,
+    @SerializedName("Duration") val duration: Int? = null
 )
 
 data class ChatMessage(val text: String, val isFromUser: Boolean)

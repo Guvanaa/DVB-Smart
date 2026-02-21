@@ -19,7 +19,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-data class Favorite(val name: String, val stopId: String)
+data class Favorite(
+    val name: String,
+    val stopId: String,
+    val iconName: String = "Star" // Default icon
+)
 
 class TransitViewModel(
     private val repository: TransitRepository,
@@ -265,7 +269,15 @@ class TransitViewModel(
         if (existing != null) {
             current.remove(existing)
         } else {
-            current.add(Favorite(name, stopId))
+            current.add(Favorite(name, stopId, "Star"))
+        }
+        _favorites.value = current
+        favoritesManager.saveFavorites(current)
+    }
+
+    fun updateFavoriteIcon(stopId: String, newIcon: String) {
+        val current = _favorites.value.map {
+            if (it.stopId == stopId) it.copy(iconName = newIcon) else it
         }
         _favorites.value = current
         favoritesManager.saveFavorites(current)

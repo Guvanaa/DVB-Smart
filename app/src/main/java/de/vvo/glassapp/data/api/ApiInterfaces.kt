@@ -9,7 +9,7 @@ interface VvoApi {
     suspend fun searchStop(
         @Query("query") query: String,
         @Query("stopsOnly") stopsOnly: Boolean = true,
-        @Query("dvbOnly") dvbOnly: Boolean = true
+        @Query("dvbOnly") dvbOnly: Boolean = false
     ): StopSearchResponse
 
     @GET("dm")
