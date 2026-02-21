@@ -14,6 +14,8 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -103,6 +105,37 @@ fun AssistantScreen(navController: NavController) {
             if (isTyping) {
                 item {
                     TypingIndicator()
+                }
+            }
+        }
+
+        // Quick Buttons
+        val quickActions = listOf(
+            "Wann fährt die 3?",
+            "Zeig mir die Karte",
+            "Favoriten",
+            "DVB Fakten",
+            "Tickets?"
+        )
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(bottom = 12.dp)
+        ) {
+            items(quickActions) { action ->
+                Button(
+                    onClick = {
+                        inputText = action
+                        viewModel.sendMessageToAssistant(action, context)
+                        inputText = ""
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.White.copy(alpha = 0.1f),
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Text(text = action, fontSize = 13.sp)
                 }
             }
         }

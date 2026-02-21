@@ -46,6 +46,7 @@ interface VvoApi {
         @Query("origin") origin: String,
         @Query("destination") destination: String,
         @Query("isarrival") isArrival: Boolean = false,
+        @Query("time") time: String? = null,
         @Query("limit") limit: Int = 5
     ): TripResponse
 }

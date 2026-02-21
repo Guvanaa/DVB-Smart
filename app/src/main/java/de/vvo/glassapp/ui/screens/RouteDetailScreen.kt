@@ -25,7 +25,7 @@ import de.vvo.glassapp.ui.theme.GreenPunctual
 import de.vvo.glassapp.ui.theme.RedLate
 
 @Composable
-fun RouteDetailSheet(stops: List<StopPoint>, onStopClick: (StopPoint) -> Unit) {
+fun RouteDetailSheet(stops: List<StopPoint>, line: String? = null, onStopClick: (StopPoint) -> Unit) {
     GlassCard(
         modifier = Modifier
             .fillMaxWidth()
@@ -33,13 +33,27 @@ fun RouteDetailSheet(stops: List<StopPoint>, onStopClick: (StopPoint) -> Unit) {
         shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp, bottomStart = 24.dp, bottomEnd = 24.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = stringResource(R.string.route_gradient),
-                fontSize = 24.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = Color.White,
-                modifier = Modifier.padding(bottom = 20.dp)
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (line != null) {
+                    Surface(
+                        color = DvbYellow,
+                        shape = RoundedCornerShape(4.dp),
+                        modifier = Modifier.size(width = 44.dp, height = 28.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(text = line, color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                }
+                Text(
+                    text = stringResource(R.string.route_gradient),
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color.White
+                )
+            }
+            Spacer(modifier = Modifier.height(20.dp))
 
             if (stops.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

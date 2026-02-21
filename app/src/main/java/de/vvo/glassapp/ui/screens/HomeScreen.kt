@@ -1,5 +1,10 @@
 package de.vvo.glassapp.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -14,6 +19,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Star
@@ -33,6 +39,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import de.vvo.glassapp.R
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import de.vvo.glassapp.data.model.Stop
 import de.vvo.glassapp.ui.components.GlassCard
 import de.vvo.glassapp.ui.theme.DvbYellow
@@ -43,12 +51,30 @@ import de.vvo.glassapp.ui.viewmodel.TransitViewModel
 fun HomeScreen(navController: NavController) {
     val viewModel: TransitViewModel = viewModel(factory = TransitViewModel.Factory)
     var searchQuery by remember { mutableStateOf("") }
+    val haptic = LocalHapticFeedback.current
     val keyboardController = LocalSoftwareKeyboardController.current
     val searchResults by viewModel.searchResults.collectAsState()
     val locationResults by viewModel.locationResults.collectAsState()
     val trips by viewModel.trips.collectAsState()
     val isSearchingTrips = viewModel.isSearchingTrips
     val favorites by viewModel.favorites.collectAsState()
+    val customOrigin by viewModel.customOrigin.collectAsState()
+
+    var showEditFavoriteDialog by remember { mutableStateOf<de.vvo.glassapp.ui.viewmodel.Favorite?>(null) }
+    var favoriteNewName by remember { mutableStateOf("") }
+    var isArrivalMode by remember { mutableStateOf(false) }
+    var selectedTime by remember { mutableStateOf<String?>(null) }
+    var showTimeDialog by remember { mutableStateOf(false) }
+    var timeInput by remember { mutableStateOf("") }
+
+    LaunchedEffect(searchQuery) {
+        if (searchQuery.length >= 2) {
+            kotlinx.coroutines.delay(300)
+            viewModel.searchStops(searchQuery)
+        } else if (searchQuery.isEmpty()) {
+            viewModel.searchStops("")
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -103,72 +129,92 @@ fun HomeScreen(navController: NavController) {
             }
         }
 
-        // Custom Glass Search Bar
+        // Connection Search Panel
         GlassCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 20.dp),
-            shape = RoundedCornerShape(18.dp),
-            padding = 4.dp
+            shape = RoundedCornerShape(22.dp),
+            padding = 12.dp
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
-            ) {
-                Spacer(modifier = Modifier.width(12.dp))
-                Icon(Icons.Default.Search, contentDescription = null, tint = Color.White.copy(alpha = 0.6f))
-                Spacer(modifier = Modifier.width(12.dp))
-                Box(
-                    contentAlignment = Alignment.CenterStart,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    if (searchQuery.isEmpty()) {
-                        Text(
-                            text = "Haltestelle suchen...",
-                            color = Color.White.copy(alpha = 0.4f),
-                            fontSize = 16.sp
-                        )
+            Column {
+                // Origin
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.MyLocation, contentDescription = null, tint = DvbYellow, modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Box(modifier = Modifier.weight(1f)) {
+                        if (customOrigin == null) {
+                            Text("Mein Standort", color = Color.White.copy(alpha = 0.6f), fontSize = 16.sp)
+                        } else {
+                            Text(customOrigin!!.name, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        }
                     }
-                    BasicTextField(
-                        value = searchQuery,
-                        onValueChange = {
-                            searchQuery = it
-                            if (it.isEmpty()) {
-                                viewModel.searchStops("")
-                            }
-                        },
-                        textStyle = TextStyle(color = Color.White, fontSize = 16.sp),
-                        modifier = Modifier.fillMaxWidth(),
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                        keyboardActions = KeyboardActions(onSearch = {
-                            if (searchQuery.isNotEmpty()) {
-                                viewModel.searchStops(searchQuery)
-                                keyboardController?.hide()
-                            }
-                        })
+                    if (customOrigin != null) {
+                        IconButton(onClick = { viewModel.setCustomOrigin(null) }, modifier = Modifier.size(24.dp)) {
+                            Text("✕", color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp)
+                        }
+                    }
+                }
+
+                Divider(modifier = Modifier.padding(vertical = 12.dp), color = Color.White.copy(alpha = 0.1f))
+
+                // Time Selection
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable {
+                    showTimeDialog = true
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                }) {
+                    Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = DvbYellow, modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        if (isArrivalMode) "Ankunft" else "Abfahrt",
+                        color = Color.White,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    Text(
+                        selectedTime ?: "Jetzt",
+                        color = DvbYellow,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
                     )
                 }
 
-                if (searchQuery.isNotEmpty()) {
-                    Button(
-                        onClick = {
-                            viewModel.searchStops(searchQuery)
-                            keyboardController?.hide()
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = DvbYellow),
-                        shape = RoundedCornerShape(12.dp),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                        modifier = Modifier.height(36.dp)
-                    ) {
-                        Text("Go", color = Color.Black, fontWeight = FontWeight.Bold)
+                Divider(modifier = Modifier.padding(vertical = 12.dp), color = Color.White.copy(alpha = 0.1f))
+
+                // Destination / Search
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Search, contentDescription = null, tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                        if (searchQuery.isEmpty()) {
+                            Text("Ziel oder Haltestelle...", color = Color.White.copy(alpha = 0.4f), fontSize = 16.sp)
+                        }
+                        BasicTextField(
+                            value = searchQuery,
+                            onValueChange = { searchQuery = it },
+                            textStyle = TextStyle(color = Color.White, fontSize = 16.sp),
+                            modifier = Modifier.fillMaxWidth(),
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                            keyboardActions = KeyboardActions(onSearch = {
+                                if (searchQuery.isNotEmpty()) {
+                                    viewModel.searchStops(searchQuery)
+                                    keyboardController?.hide()
+                                }
+                            })
+                        )
                     }
-                    Spacer(modifier = Modifier.width(4.dp))
                 }
             }
         }
 
-        if (searchQuery.isNotEmpty()) {
-            LazyColumn(modifier = Modifier.weight(1f)) {
+        AnimatedVisibility(
+            visible = searchQuery.isNotEmpty(),
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically(),
+            modifier = Modifier.weight(1f)
+        ) {
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
                 item {
                     SectionHeader("Haltestellen")
                 }
@@ -179,7 +225,16 @@ fun HomeScreen(navController: NavController) {
                         isFavorite = favorites.any { it.stopId == stop.id },
                         onFavoriteClick = { viewModel.toggleFavorite(stop.name, stop.id) }
                     ) {
-                        navController.navigate("map/${stop.id}")
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        if (customOrigin == null) {
+                            // Show options: Map or Set as Origin
+                            viewModel.selectStop(stop)
+                            navController.navigate("map/${stop.id}")
+                        } else {
+                            // Already have origin, this is destination
+                            viewModel.findTrips(customOrigin!!.id, stop.id, selectedTime, isArrivalMode)
+                            searchQuery = ""
+                        }
                     }
                 }
                 item {
@@ -196,7 +251,9 @@ fun HomeScreen(navController: NavController) {
                     }
                 }
             }
-        } else {
+        }
+
+        if (searchQuery.isEmpty()) {
             // Favorites Section
             SectionHeader(stringResource(R.string.favorites))
 
@@ -208,33 +265,54 @@ fun HomeScreen(navController: NavController) {
                     FavoriteItem(
                         favorite = favorite,
                         onClick = {
-                            viewModel.findTrips(null, favorite.stopId)
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            viewModel.findTrips(null, favorite.stopId, selectedTime, isArrivalMode)
                         },
                         onLongClick = {
-                            viewModel.toggleFavorite(favorite.name, favorite.stopId)
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            favoriteNewName = favorite.name
+                            showEditFavoriteDialog = favorite
                         }
                     )
                 }
             }
 
-            if (isSearchingTrips) {
-                Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+            AnimatedVisibility(
+                visible = isSearchingTrips,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = DvbYellow)
                 }
-            } else if (trips.isNotEmpty()) {
-                SectionHeader(stringResource(R.string.connections))
-                LazyColumn(modifier = Modifier.weight(1f)) {
-                    items(trips) { trip ->
-                        TripItem(trip)
+            }
+
+            AnimatedVisibility(
+                visible = trips.isNotEmpty() && !isSearchingTrips,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically(),
+                modifier = Modifier.weight(1f)
+            ) {
+                Column {
+                    SectionHeader(stringResource(R.string.connections))
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        items(trips) { trip ->
+                        TripItem(trip, navController)
+                        }
                     }
                 }
-            } else {
+            }
+
+            if (trips.isEmpty() && !isSearchingTrips) {
                 Spacer(modifier = Modifier.weight(1f))
             }
         }
 
         Button(
-            onClick = { navController.navigate("map") },
+            onClick = {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                navController.navigate("map")
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp)
@@ -246,6 +324,97 @@ fun HomeScreen(navController: NavController) {
         }
 
         Spacer(modifier = Modifier.height(24.dp))
+    }
+
+        // Time Dialog
+        if (showTimeDialog) {
+            AlertDialog(
+                onDismissRequest = { showTimeDialog = false },
+                title = { Text("Uhrzeit festlegen") },
+                text = {
+                    Column {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            RadioButton(selected = !isArrivalMode, onClick = { isArrivalMode = false })
+                            Text("Abfahrt", color = Color.Black)
+                            Spacer(modifier = Modifier.width(16.dp))
+                            RadioButton(selected = isArrivalMode, onClick = { isArrivalMode = true })
+                            Text("Ankunft", color = Color.Black)
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        OutlinedTextField(
+                            value = timeInput,
+                            onValueChange = { timeInput = it },
+                            label = { Text("Zeit (HH:mm)") },
+                            placeholder = { Text("z.B. 14:30") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        TextButton(onClick = {
+                            selectedTime = null
+                            timeInput = ""
+                            showTimeDialog = false
+                        }) {
+                            Text("Jetzt abfahren")
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        if (timeInput.contains(":")) {
+                            selectedTime = timeInput
+                        }
+                        showTimeDialog = false
+                    }) {
+                        Text("Übernehmen")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showTimeDialog = false }) {
+                        Text("Abbrechen")
+                    }
+                }
+            )
+        }
+
+    // Edit Favorite Dialog
+    if (showEditFavoriteDialog != null) {
+        AlertDialog(
+            onDismissRequest = { showEditFavoriteDialog = null },
+            title = { Text("Favorit bearbeiten") },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = favoriteNewName,
+                        onValueChange = { favoriteNewName = it },
+                        label = { Text("Name") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = {
+                            viewModel.toggleFavorite(showEditFavoriteDialog!!.name, showEditFavoriteDialog!!.stopId)
+                            showEditFavoriteDialog = null
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Red.copy(alpha = 0.7f)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Löschen", color = Color.White)
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.updateFavoriteName(showEditFavoriteDialog!!.stopId, favoriteNewName)
+                    showEditFavoriteDialog = null
+                }) {
+                    Text("Speichern")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditFavoriteDialog = null }) {
+                    Text("Abbrechen")
+                }
+            }
+        )
     }
 }
 
@@ -350,23 +519,56 @@ fun FavoriteItem(
 }
 
 @Composable
-fun TripItem(trip: de.vvo.glassapp.data.model.Trip) {
+fun TripItem(trip: de.vvo.glassapp.data.model.Trip, navController: NavController) {
+    val haptic = LocalHapticFeedback.current
     GlassCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 6.dp),
         shape = RoundedCornerShape(16.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column {
-                Text(text = "${trip.departureTime} - ${trip.arrivalTime}", fontWeight = FontWeight.Bold, color = Color.White)
-                Text(text = "Dauer: ${trip.duration} min", fontSize = 13.sp, color = Color.White.copy(alpha = 0.7f))
+        Column {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text(text = "${trip.departureTime} - ${trip.arrivalTime}", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 17.sp)
+                    Text(text = "Dauer: ${trip.duration} min", fontSize = 13.sp, color = Color.White.copy(alpha = 0.7f))
+                }
+                Text(text = if (trip.interchanges == 0) "Direkt" else "${trip.interchanges} Umstiege", fontSize = 13.sp, color = DvbYellow, fontWeight = FontWeight.Bold)
             }
-            Text(text = "${trip.interchanges} Umstiege", fontSize = 13.sp, color = DvbYellow, fontWeight = FontWeight.Bold)
+            if (trip.sections != null && trip.sections.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    trip.sections.filter { it.line != null }.forEachIndexed { index, section ->
+                        Surface(
+                            color = DvbYellow,
+                            shape = RoundedCornerShape(4.dp),
+                            modifier = Modifier
+                                .padding(end = 4.dp)
+                                .clickable {
+                                    // Navigate to map and focus on this vehicle/route if possible
+                                    // For now just show map
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    navController.navigate("map")
+                                }
+                        ) {
+                            Text(
+                                text = section.line!!,
+                                color = Color.Black,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 10.sp,
+                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                            )
+                        }
+                        if (index < trip.sections.filter { it.line != null }.size - 1) {
+                            Text(">", color = Color.White.copy(alpha = 0.3f), fontSize = 10.sp, modifier = Modifier.padding(end = 4.dp))
+                        }
+                    }
+                }
+            }
         }
     }
 }

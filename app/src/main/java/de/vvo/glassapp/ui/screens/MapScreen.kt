@@ -71,6 +71,7 @@ fun MapScreen(
     val pins by viewModel.mapPins.collectAsState()
     val stops by viewModel.mapStops.collectAsState()
     val departures by viewModel.departures.collectAsState()
+    val userLocationState by viewModel.userLocation.collectAsState()
     val selectedVehicle by viewModel.selectedVehicle.collectAsState()
     val selectedStop by viewModel.selectedStop.collectAsState()
     val routeStops by viewModel.selectedVehicleRoute.collectAsState()
@@ -117,6 +118,7 @@ fun MapScreen(
     LaunchedEffect(pins, vehicleManager) {
         vehicleManager?.let { manager ->
             try {
+                android.util.Log.d("MapScreen", "Updating vehicle symbols: ${pins.size}")
                 manager.deleteAll()
                 pins.forEach { pin ->
                     val color = when {
@@ -133,12 +135,13 @@ fun MapScreen(
                     manager.create(SymbolOptions()
                         .withLatLng(LatLng(pin.lat, pin.lon))
                         .withTextField(pin.line)
-                        .withTextSize(11f)
+                        .withTextSize(12f)
                         .withTextColor("#000000")
                         .withTextHaloColor("#FFFFFF")
                         .withTextHaloWidth(2.0f)
                         .withIconImage(icon)
                         .withIconColor(color)
+                        .withIconSize(1.2f)
                         .withData(com.google.gson.JsonPrimitive("v_${pin.id}"))
                     )
                 }
@@ -165,6 +168,7 @@ fun MapScreen(
     LaunchedEffect(stops, stopManager) {
         stopManager?.let { manager ->
             try {
+                android.util.Log.d("MapScreen", "Updating stop symbols: ${stops.size}")
                 manager.deleteAll()
                 stops.forEach { stop ->
                     if (stop.lat != null && stop.lon != null) {
@@ -172,7 +176,7 @@ fun MapScreen(
                             .withLatLng(LatLng(stop.lat, stop.lon))
                             .withIconImage("dot-11")
                             .withIconColor("#FFFFFF")
-                            .withIconSize(1.2f)
+                            .withIconSize(1.5f)
                             .withData(com.google.gson.JsonPrimitive("s_${stop.id}"))
                         )
                     }
@@ -198,30 +202,47 @@ fun MapScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
+        val mapView = remember { MapView(context) }
+
+        DisposableEffect(mapView) {
+            mapView.onCreate(null)
+            mapView.onStart()
+            mapView.onResume()
+            onDispose {
+                mapView.onPause()
+                mapView.onStop()
+                mapView.onDestroy()
+            }
+        }
+
         AndroidView(
             factory = {
-                MapView(context).apply {
-                    onCreate(null)
+                mapView.apply {
                     getMapAsync { mapboxMap ->
                         mapInstance = mapboxMap
                         val styleUrl = "https://tiles.openfreemap.org/styles/bright"
                         mapboxMap.setStyle(styleUrl) { style ->
                             // Add essential icons to style if missing
-                            fun createCircleBitmap(size: Int, color: Int): android.graphics.Bitmap {
+                            fun createCircleBitmap(size: Int, color: Int, strokeColor: Int = android.graphics.Color.BLACK): android.graphics.Bitmap {
                                 val b = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888)
                                 val c = android.graphics.Canvas(b)
                                 val p = android.graphics.Paint()
                                 p.isAntiAlias = true
                                 p.color = color
-                                c.drawCircle(size/2f, size/2f, size/2f - 1f, p)
+                                p.style = android.graphics.Paint.Style.FILL
+                                c.drawCircle(size/2f, size/2f, size/2f - 2f, p)
+                                p.color = strokeColor
+                                p.style = android.graphics.Paint.Style.STROKE
+                                p.strokeWidth = 2f
+                                c.drawCircle(size/2f, size/2f, size/2f - 2f, p)
                                 return b
                             }
 
-                            style.addImage("tram", createCircleBitmap(32, android.graphics.Color.WHITE))
-                            style.addImage("bus", createCircleBitmap(32, android.graphics.Color.WHITE))
-                            style.addImage("rail", createCircleBitmap(32, android.graphics.Color.WHITE))
-                            style.addImage("marker-15", createCircleBitmap(24, android.graphics.Color.RED))
-                            style.addImage("dot-11", createCircleBitmap(12, android.graphics.Color.WHITE))
+                            style.addImage("tram", createCircleBitmap(40, android.graphics.Color.parseColor("#FFCC00")))
+                            style.addImage("bus", createCircleBitmap(40, android.graphics.Color.parseColor("#FFCC00")))
+                            style.addImage("rail", createCircleBitmap(40, android.graphics.Color.parseColor("#FFCC00")))
+                            style.addImage("marker-15", createCircleBitmap(32, android.graphics.Color.RED))
+                            style.addImage("dot-11", createCircleBitmap(16, android.graphics.Color.WHITE))
 
                             vehicleManager = SymbolManager(this, mapboxMap, style).apply {
                                 iconAllowOverlap = true
@@ -265,13 +286,15 @@ fun MapScreen(
                         }
                         val target = if (lat != null && lon != null) {
                             LatLng(lat, lon)
+                        } else if (userLocationState != null) {
+                            userLocationState!!
                         } else {
                             LatLng(51.0509, 13.7373)
                         }
 
                         mapboxMap.cameraPosition = CameraPosition.Builder()
                             .target(target)
-                            .zoom(if (lat != null) 15.0 else 13.0)
+                            .zoom(if (lat != null || userLocationState != null) 15.0 else 13.0)
                             .build()
                     }
                 }
@@ -311,7 +334,7 @@ fun MapScreen(
             Box(
                 modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(16.dp).navigationBarsPadding()
             ) {
-                RouteDetailSheet(stops = routeStops, onStopClick = { stop ->
+                RouteDetailSheet(stops = routeStops, line = selectedVehicle?.line, onStopClick = { stop ->
                     mapInstance?.animateCamera(
                         com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLngZoom(
                             LatLng(stop.lat, stop.lon), 15.0

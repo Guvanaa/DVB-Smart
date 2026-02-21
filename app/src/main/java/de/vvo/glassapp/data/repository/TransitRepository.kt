@@ -30,8 +30,8 @@ class TransitRepository(
         vvoApi.getRoute(tripId).stops ?: emptyList()
     }
 
-    suspend fun getTrips(origin: String, destination: String) = withContext(Dispatchers.IO) {
-        vvoApi.getTrips(origin, destination).trips ?: emptyList()
+    suspend fun getTrips(origin: String, destination: String, isArrival: Boolean = false, time: String? = null) = withContext(Dispatchers.IO) {
+        vvoApi.getTrips(origin, destination, isArrival, time).trips ?: emptyList()
     }
 
     suspend fun searchLocations(query: String) = withContext(Dispatchers.IO) {

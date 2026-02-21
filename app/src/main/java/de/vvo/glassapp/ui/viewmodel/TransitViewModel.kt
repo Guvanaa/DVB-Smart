@@ -81,6 +81,13 @@ class TransitViewModel(
 
     var isSearchingTrips by mutableStateOf(false)
 
+    private val _customOrigin = MutableStateFlow<Stop?>(null)
+    val customOrigin: StateFlow<Stop?> = _customOrigin
+
+    fun setCustomOrigin(stop: Stop?) {
+        _customOrigin.value = stop
+    }
+
     private val _userLocation = MutableStateFlow<LatLng?>(null)
     val userLocation: StateFlow<LatLng?> = _userLocation
 
@@ -114,18 +121,41 @@ class TransitViewModel(
 
     private suspend fun processAssistantInput(input: String, context: android.content.Context): String {
         val lowInput = input.lowercase()
+        val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+
         return when {
-            lowInput.contains("hallo") || lowInput.contains("hi") || lowInput.contains("hey") || lowInput.contains("moin") ->
-                context.getString(de.vvo.glassapp.R.string.assistant_initial_response)
+            lowInput.contains("hallo") || lowInput.contains("hi") || lowInput.contains("hey") || lowInput.contains("moin") || lowInput.contains("servus") -> {
+                when {
+                    hour in 5..11 -> context.getString(de.vvo.glassapp.R.string.assistant_greeting_morning)
+                    hour in 18..23 -> context.getString(de.vvo.glassapp.R.string.assistant_greeting_evening)
+                    else -> context.getString(de.vvo.glassapp.R.string.assistant_initial_response)
+                }
+            }
 
             lowInput.contains("karte") || lowInput.contains("map") || lowInput.contains("wo bin ich") || lowInput.contains("standort") -> {
                 assistantAction = "navigate:map"
                 "Gerne! Ich zeige dir deinen aktuellen Standort und den Live-Verkehr auf der Karte."
             }
 
+            lowInput.contains("von") && lowInput.contains("nach") || lowInput.contains("zum") -> {
+                val parts = if (lowInput.contains("nach")) lowInput.split("nach") else lowInput.split("zum")
+                val originPart = parts[0].replace("von", "").trim()
+                val destPart = parts[1].trim()
+
+                val originStops = repository.searchStops(originPart)
+                val destStops = repository.searchStops(destPart)
+
+                if (originStops.isNotEmpty() && destStops.isNotEmpty()) {
+                    findTrips(originStops.first().id, destStops.first().id)
+                    "Alles klar! Ich suche nach einer Verbindung von ${originStops.first().name} nach ${destStops.first().name}."
+                } else {
+                    "Ich konnte eines der Ziele nicht finden. Meintest du vielleicht etwas anderes?"
+                }
+            }
+
             lowInput.contains("abfahrt") || lowInput.contains("wann") || lowInput.contains("nächste") || lowInput.contains("bahn") || lowInput.contains("bus") -> {
-                val query = input.replace("abfahrt", "").replace("wann", "").replace("nächste", "")
-                    .replace("bahn", "").replace("bus", "").replace("straßenbahn", "").trim()
+                val query = input.lowercase().replace("abfahrt", "").replace("wann", "").replace("nächste", "")
+                    .replace("bahn", "").replace("bus", "").replace("straßenbahn", "").replace("für", "").trim()
 
                 val stops = if (query.length > 2) repository.searchStops(query) else emptyList()
                 if (stops.isNotEmpty()) {
@@ -147,11 +177,11 @@ class TransitViewModel(
             lowInput.contains("verspätung") || lowInput.contains("stau") || lowInput.contains("probleme") || lowInput.contains("störung") ->
                 context.getString(de.vvo.glassapp.R.string.assistant_delay_info)
 
-            lowInput.contains("favoriten") || lowInput.contains("stern") || lowInput.contains("gespeichert") -> {
+            lowInput.contains("favoriten") || lowInput.contains("stern") || lowInput.contains("gespeichert") || lowInput.contains("merkliste") -> {
                 if (_favorites.value.isEmpty()) {
                     "Du hast noch keine Favoriten. Suche eine Haltestelle und tippe auf den Stern, um sie hier zu speichern."
                 } else {
-                    "Hier sind deine Favoriten: " + _favorites.value.joinToString { it.name } + ". Tippe auf einen auf der Startseite, um eine Verbindung zu planen."
+                    "Deine aktuellen Favoriten sind: " + _favorites.value.joinToString { it.name } + ". Tippe auf einen auf der Startseite, um direkt eine Verbindung von deinem Standort zu planen."
                 }
             }
 
@@ -159,7 +189,7 @@ class TransitViewModel(
                 "Ich bin Lunina, deine DVB-Assistentin. Ich kann Abfahrten finden (z.B. 'Wann fährt die 3 am Hauptbahnhof?'), Verbindungen planen, dir die Karte zeigen oder dir Fakten über den DVB erzählen."
             }
 
-            lowInput.contains("danke") || lowInput.contains("super") || lowInput.contains("cool") || lowInput.contains("toll") ->
+            lowInput.contains("danke") || lowInput.contains("super") || lowInput.contains("cool") || lowInput.contains("toll") || lowInput.contains("vielen dank") ->
                 context.getString(de.vvo.glassapp.R.string.assistant_thanks_response)
 
             lowInput.contains("wetter") || lowInput.contains("regen") || lowInput.contains("sonne") || lowInput.contains("kalt") || lowInput.contains("warm") ->
@@ -171,8 +201,14 @@ class TransitViewModel(
             lowInput.contains("tag") || lowInput.contains("morgen") || lowInput.contains("abend") || lowInput.contains("nacht") ->
                 context.getString(de.vvo.glassapp.R.string.assistant_nice_day)
 
-            lowInput.contains("wusstest") || lowInput.contains("fakten") || lowInput.contains("wissen") || lowInput.contains("erzähl") ->
-                context.getString(de.vvo.glassapp.R.string.assistant_did_you_know)
+            lowInput.contains("wusstest") || lowInput.contains("fakten") || lowInput.contains("wissen") || lowInput.contains("erzähl") || lowInput.contains("info") -> {
+                val facts = listOf(
+                    context.getString(de.vvo.glassapp.R.string.assistant_did_you_know),
+                    context.getString(de.vvo.glassapp.R.string.assistant_fun_fact_1),
+                    context.getString(de.vvo.glassapp.R.string.assistant_fun_fact_2)
+                )
+                facts.random()
+            }
 
             else -> context.getString(de.vvo.glassapp.R.string.assistant_fallback)
         }
@@ -203,12 +239,20 @@ class TransitViewModel(
     }
 
     fun loadMapData(swLat: Double, swLon: Double, neLat: Double, neLon: Double) {
+        // Only load if area is reasonable (to avoid overwhelming API and UI)
+        if (kotlin.math.abs(neLat - swLat) > 0.1 || kotlin.math.abs(neLon - swLon) > 0.15) {
+            return
+        }
         viewModelScope.launch {
             try {
+                Log.d(TAG, "Loading map data for: SW($swLat, $swLon) NE($neLat, $neLon)")
                 val pins = repository.getMapPins(swLat, swLon, neLat, neLon)
                 _mapPins.value = pins
+                Log.d(TAG, "Fetched ${pins.size} pins")
+
                 val stops = repository.getStopsInArea(swLat, swLon, neLat, neLon)
                 _mapStops.value = stops
+                Log.d(TAG, "Fetched ${stops.size} stops")
             } catch (e: Exception) {
                 Log.e(TAG, "Map data load failed", e)
             }
@@ -222,6 +266,14 @@ class TransitViewModel(
             current.remove(existing)
         } else {
             current.add(Favorite(name, stopId))
+        }
+        _favorites.value = current
+        favoritesManager.saveFavorites(current)
+    }
+
+    fun updateFavoriteName(stopId: String, newName: String) {
+        val current = _favorites.value.map {
+            if (it.stopId == stopId) it.copy(name = newName) else it
         }
         _favorites.value = current
         favoritesManager.saveFavorites(current)
@@ -263,12 +315,16 @@ class TransitViewModel(
         _selectedVehicleRoute.value = emptyList()
     }
 
-    fun findTrips(originId: String?, destinationId: String) {
-        val origin = originId ?: _userLocation.value?.let { "coord:${it.longitude}:${it.latitude}" } ?: "33000028"
+    fun findTrips(originId: String?, destinationId: String, time: String? = null, isArrival: Boolean = false) {
+        val origin = originId
+            ?: _customOrigin.value?.id
+            ?: _userLocation.value?.let { "coord:${it.longitude}:${it.latitude}" }
+            ?: "33000028"
+
         viewModelScope.launch {
             isSearchingTrips = true
             try {
-                _trips.value = repository.getTrips(origin, destinationId)
+                _trips.value = repository.getTrips(origin, destinationId, isArrival, time)
             } catch (e: Exception) {
                 Log.e(TAG, "Trip search failed", e)
                 _trips.value = emptyList()

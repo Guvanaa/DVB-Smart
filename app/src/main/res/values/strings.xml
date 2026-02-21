@@ -29,4 +29,9 @@
     <string name="assistant_nice_day">Einen wunderschönen Tag wünsche ich dir! Dresden sieht heute toll aus vom Fenster einer Straßenbahn.</string>
     <string name="assistant_ticket_info">Tickets kaufst du am besten direkt in der DVB-App oder am Automaten. Ich kann dir hier leider noch keine Tickets verkaufen, aber ich zeige dir den Weg!</string>
     <string name="assistant_did_you_know">Wusstest du schon? Die DVB befördert jedes Jahr über 150 Millionen Fahrgäste. Das ist eine Menge!</string>
+    <string name="assistant_fun_fact_1">Die steilste Standseilbahn Deutschlands befindet sich in Dresden! Sie verbindet Loschwitz mit Oberloschwitz.</string>
+    <string name="assistant_fun_fact_2">Die DVB hat über 130 km Schienennetz in Dresden. Das entspricht fast der Strecke von Dresden nach Prag!</string>
+    <string name="assistant_routing_hint">Ich kann Verbindungen für dich suchen! Sag mir einfach Start und Ziel, zum Beispiel: "Vom Postplatz zum Hauptbahnhof".</string>
+    <string name="assistant_greeting_morning">Guten Morgen! Hast du deinen Kaffee schon getrunken? Ich helfe dir, pünktlich zur Arbeit zu kommen.</string>
+    <string name="assistant_greeting_evening">Guten Abend! Ich hoffe, du hattest einen schönen Tag. Hier sind die nächsten Abfahrten für dich.</string>
 </resources>

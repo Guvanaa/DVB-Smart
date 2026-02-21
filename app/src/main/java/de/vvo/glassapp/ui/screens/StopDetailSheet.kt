@@ -14,11 +14,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import de.vvo.glassapp.data.model.Departure
 import de.vvo.glassapp.data.model.Stop
+import androidx.lifecycle.viewmodel.compose.viewModel
 import de.vvo.glassapp.ui.components.GlassCard
 import de.vvo.glassapp.ui.theme.DvbYellow
+import de.vvo.glassapp.ui.viewmodel.TransitViewModel
 
 @Composable
 fun StopDetailSheet(stop: Stop, departures: List<Departure>) {
+    val viewModel: TransitViewModel = viewModel(factory = TransitViewModel.Factory)
     GlassCard(
         modifier = Modifier
             .fillMaxWidth()
@@ -33,15 +36,29 @@ fun StopDetailSheet(stop: Stop, departures: List<Departure>) {
                 color = Color.White,
                 modifier = Modifier.padding(bottom = 4.dp)
             )
-            Text(
-                text = stop.place ?: "Dresden",
-                fontSize = 14.sp,
-                color = Color.White.copy(alpha = 0.7f),
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stop.place ?: "Dresden",
+                    fontSize = 14.sp,
+                    color = Color.White.copy(alpha = 0.7f)
+                )
+                Button(
+                    onClick = { viewModel.setCustomOrigin(stop) },
+                    colors = ButtonDefaults.buttonColors(containerColor = DvbYellow),
+                    shape = RoundedCornerShape(12.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                    modifier = Modifier.height(32.dp)
+                ) {
+                    Text("Von hier starten", color = Color.Black, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                }
+            }
 
             if (departures.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Box(modifier = Modifier.fillMaxWidth().height(150.dp), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = DvbYellow)
                 }
             } else {
