@@ -1,10 +1,13 @@
 package de.vvo.glassapp.ui.screens
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -202,9 +205,15 @@ fun HomeScreen(navController: NavController) {
                 modifier = Modifier.padding(bottom = 28.dp)
             ) {
                 items(favorites) { favorite ->
-                    FavoriteItem(favorite) {
-                        viewModel.findTrips(null, favorite.stopId)
-                    }
+                    FavoriteItem(
+                        favorite = favorite,
+                        onClick = {
+                            viewModel.findTrips(null, favorite.stopId)
+                        },
+                        onLongClick = {
+                            viewModel.toggleFavorite(favorite.name, favorite.stopId)
+                        }
+                    )
                 }
             }
 
@@ -288,36 +297,54 @@ fun GlassSearchResultItem(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun FavoriteItem(favorite: de.vvo.glassapp.ui.viewmodel.Favorite, onClick: () -> Unit) {
+fun FavoriteItem(
+    favorite: de.vvo.glassapp.ui.viewmodel.Favorite,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit
+) {
     GlassCard(
         modifier = Modifier
-            .width(110.dp)
+            .width(100.dp)
             .height(100.dp)
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(22.dp),
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            ),
+        shape = RoundedCornerShape(24.dp),
         padding = 0.dp
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-            modifier = Modifier.fillMaxSize().padding(8.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Star,
-                contentDescription = null,
-                tint = DvbYellow,
-                modifier = Modifier.size(28.dp)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = favorite.name,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                maxLines = 1,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-            )
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxSize().padding(8.dp)
+            ) {
+                Surface(
+                    color = Color.White.copy(alpha = 0.15f),
+                    shape = CircleShape,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Filled.Star,
+                            contentDescription = null,
+                            tint = DvbYellow,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = favorite.name,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color.White,
+                    maxLines = 1,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+            }
         }
     }
 }

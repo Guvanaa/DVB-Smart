@@ -18,7 +18,7 @@
     <string name="assistant_hint">Frag Lunina über den DVB…</string>
     <string name="assistant_welcome">Hallo! Ich bin Lunina, dein intelligenter DVB-Begleiter. Wie kann ich dir heute helfen?</string>
     <string name="assistant_error">Entschuldigung, ich habe gerade Probleme, die Daten abzurufen. Kannst du das nochmal versuchen?</string>
-    <string name="assistant_initial_response">Hallo! Ich bin Lumina. Ich kann dir helfen, Abfahrten zu finden oder Verbindungen in Dresden zu planen. Wonach suchst du?</string>
+    <string name="assistant_initial_response">Hallo! Ich bin Lunina. Ich kann dir helfen, Abfahrten zu finden oder Verbindungen in Dresden zu planen. Wonach suchst du?</string>
     <string name="assistant_departure_found">Am %1$s fährt die %2$s nach %3$s in %4$s ab.</string>
     <string name="assistant_stop_not_found">Für welche Haltestelle möchtest du die Abfahrten wissen?</string>
     <string name="assistant_no_departures">Ich habe den Stop %1$s gefunden, aber aktuell keine Abfahrten.</string>

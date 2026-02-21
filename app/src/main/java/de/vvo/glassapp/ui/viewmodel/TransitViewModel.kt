@@ -115,17 +115,19 @@ class TransitViewModel(
     private suspend fun processAssistantInput(input: String, context: android.content.Context): String {
         val lowInput = input.lowercase()
         return when {
-            lowInput.contains("hallo") || lowInput.contains("hi") || lowInput.contains("hey") ->
+            lowInput.contains("hallo") || lowInput.contains("hi") || lowInput.contains("hey") || lowInput.contains("moin") ->
                 context.getString(de.vvo.glassapp.R.string.assistant_initial_response)
 
-            lowInput.contains("karte") || lowInput.contains("map") || lowInput.contains("wo bin ich") -> {
+            lowInput.contains("karte") || lowInput.contains("map") || lowInput.contains("wo bin ich") || lowInput.contains("standort") -> {
                 assistantAction = "navigate:map"
-                "Natürlich! Ich öffne die Karte für dich."
+                "Gerne! Ich zeige dir deinen aktuellen Standort und den Live-Verkehr auf der Karte."
             }
 
-            lowInput.contains("abfahrt") || lowInput.contains("wann") || lowInput.contains("nächste") -> {
-                val query = input.replace("abfahrt", "").replace("wann", "").replace("nächste", "").trim()
-                val stops = if (query.length > 1) repository.searchStops(query) else emptyList()
+            lowInput.contains("abfahrt") || lowInput.contains("wann") || lowInput.contains("nächste") || lowInput.contains("bahn") || lowInput.contains("bus") -> {
+                val query = input.replace("abfahrt", "").replace("wann", "").replace("nächste", "")
+                    .replace("bahn", "").replace("bus", "").replace("straßenbahn", "").trim()
+
+                val stops = if (query.length > 2) repository.searchStops(query) else emptyList()
                 if (stops.isNotEmpty()) {
                     val targetStop = stops.first()
                     val departures = repository.getDepartures(targetStop.id)
@@ -135,39 +137,41 @@ class TransitViewModel(
                     } else {
                         context.getString(de.vvo.glassapp.R.string.assistant_no_departures, targetStop.name)
                     }
+                } else if (query.isEmpty()) {
+                    "Für welche Haltestelle soll ich nachsehen? Sag mir einfach den Namen, zum Beispiel 'Postplatz'."
                 } else {
                     context.getString(de.vvo.glassapp.R.string.assistant_stop_not_found)
                 }
             }
 
-            lowInput.contains("verspätung") || lowInput.contains("stau") || lowInput.contains("probleme") ->
+            lowInput.contains("verspätung") || lowInput.contains("stau") || lowInput.contains("probleme") || lowInput.contains("störung") ->
                 context.getString(de.vvo.glassapp.R.string.assistant_delay_info)
 
-            lowInput.contains("favoriten") || lowInput.contains("stern") -> {
+            lowInput.contains("favoriten") || lowInput.contains("stern") || lowInput.contains("gespeichert") -> {
                 if (_favorites.value.isEmpty()) {
-                    "Du hast noch keine Favoriten gespeichert. Suche eine Haltestelle und klicke auf den Stern!"
+                    "Du hast noch keine Favoriten. Suche eine Haltestelle und tippe auf den Stern, um sie hier zu speichern."
                 } else {
-                    "Deine Favoriten sind: " + _favorites.value.joinToString { it.name }
+                    "Hier sind deine Favoriten: " + _favorites.value.joinToString { it.name } + ". Tippe auf einen auf der Startseite, um eine Verbindung zu planen."
                 }
             }
 
-            lowInput.contains("hilf") || lowInput.contains("hilfe") || lowInput.contains("was kannst du") -> {
-                "Ich kann dir Abfahrten für Haltestellen nennen (z.B. 'Wann fährt die nächste Bahn am Postplatz?'), dir deine Favoriten zeigen oder die Karte öffnen."
+            lowInput.contains("hilf") || lowInput.contains("hilfe") || lowInput.contains("was kannst du") || lowInput.contains("optionen") -> {
+                "Ich bin Lunina, deine DVB-Assistentin. Ich kann Abfahrten finden (z.B. 'Wann fährt die 3 am Hauptbahnhof?'), Verbindungen planen, dir die Karte zeigen oder dir Fakten über den DVB erzählen."
             }
 
-            lowInput.contains("danke") || lowInput.contains("super") || lowInput.contains("cool") ->
+            lowInput.contains("danke") || lowInput.contains("super") || lowInput.contains("cool") || lowInput.contains("toll") ->
                 context.getString(de.vvo.glassapp.R.string.assistant_thanks_response)
 
-            lowInput.contains("wetter") || lowInput.contains("regen") || lowInput.contains("sonne") ->
+            lowInput.contains("wetter") || lowInput.contains("regen") || lowInput.contains("sonne") || lowInput.contains("kalt") || lowInput.contains("warm") ->
                 context.getString(de.vvo.glassapp.R.string.assistant_weather)
 
-            lowInput.contains("ticket") || lowInput.contains("fahrkarte") || lowInput.contains("preis") ->
+            lowInput.contains("ticket") || lowInput.contains("fahrkarte") || lowInput.contains("preis") || lowInput.contains("kosten") ->
                 context.getString(de.vvo.glassapp.R.string.assistant_ticket_info)
 
-            lowInput.contains("tag") || lowInput.contains("morgen") || lowInput.contains("abend") ->
+            lowInput.contains("tag") || lowInput.contains("morgen") || lowInput.contains("abend") || lowInput.contains("nacht") ->
                 context.getString(de.vvo.glassapp.R.string.assistant_nice_day)
 
-            lowInput.contains("wusstest") || lowInput.contains("fakten") || lowInput.contains("wissen") ->
+            lowInput.contains("wusstest") || lowInput.contains("fakten") || lowInput.contains("wissen") || lowInput.contains("erzähl") ->
                 context.getString(de.vvo.glassapp.R.string.assistant_did_you_know)
 
             else -> context.getString(de.vvo.glassapp.R.string.assistant_fallback)

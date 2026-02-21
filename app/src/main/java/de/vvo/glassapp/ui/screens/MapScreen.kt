@@ -5,6 +5,7 @@ import android.graphics.Color as AndroidColor
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.MyLocation
@@ -96,9 +97,18 @@ fun MapScreen(
         try {
             Mapbox.getInstance(context)
         } catch (e: Exception) { }
+    }
 
+    // Refresh map data periodically based on current viewport
+    LaunchedEffect(mapInstance) {
         while(true) {
-            viewModel.loadMapData(51.0, 13.6, 51.1, 13.9)
+            mapInstance?.let { map ->
+                val bounds = map.projection.visibleRegion.latLngBounds
+                viewModel.loadMapData(bounds.getLatSouth(), bounds.getLonWest(), bounds.getLatNorth(), bounds.getLonEast())
+            } ?: run {
+                // Fallback to initial Dresden center if map not ready
+                viewModel.loadMapData(51.0, 13.6, 51.1, 13.9)
+            }
             delay(10000)
         }
     }
@@ -194,8 +204,25 @@ fun MapScreen(
                     onCreate(null)
                     getMapAsync { mapboxMap ->
                         mapInstance = mapboxMap
-                        val styleUrl = "https://demotiles.maplibre.org/style.json"
+                        val styleUrl = "https://tiles.openfreemap.org/styles/bright"
                         mapboxMap.setStyle(styleUrl) { style ->
+                            // Add essential icons to style if missing
+                            fun createCircleBitmap(size: Int, color: Int): android.graphics.Bitmap {
+                                val b = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888)
+                                val c = android.graphics.Canvas(b)
+                                val p = android.graphics.Paint()
+                                p.isAntiAlias = true
+                                p.color = color
+                                c.drawCircle(size/2f, size/2f, size/2f - 1f, p)
+                                return b
+                            }
+
+                            style.addImage("tram", createCircleBitmap(32, android.graphics.Color.WHITE))
+                            style.addImage("bus", createCircleBitmap(32, android.graphics.Color.WHITE))
+                            style.addImage("rail", createCircleBitmap(32, android.graphics.Color.WHITE))
+                            style.addImage("marker-15", createCircleBitmap(24, android.graphics.Color.RED))
+                            style.addImage("dot-11", createCircleBitmap(12, android.graphics.Color.WHITE))
+
                             vehicleManager = SymbolManager(this, mapboxMap, style).apply {
                                 iconAllowOverlap = true
                                 textAllowOverlap = true
