@@ -56,21 +56,20 @@ fun HomeScreen(navController: NavController) {
     ) {
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Centered Logo and Name
+        // Clean Title
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_logo),
-                contentDescription = null,
-                tint = Color.Unspecified,
-                modifier = Modifier.size(100.dp)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = "DVB-Smart",
-                fontSize = 38.sp,
+                fontSize = 42.sp,
                 fontWeight = FontWeight.Black,
                 color = Color.White,
-                letterSpacing = (-1).sp
+                letterSpacing = (-1.5).sp
+            )
+            Text(
+                text = "Dein Weg durch Dresden.",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color.White.copy(alpha = 0.7f)
             )
         }
 
@@ -148,19 +147,19 @@ fun HomeScreen(navController: NavController) {
                 }
 
                 if (searchQuery.isNotEmpty()) {
-                    IconButton(
+                    Button(
                         onClick = {
                             viewModel.searchStops(searchQuery)
                             keyboardController?.hide()
                         },
-                        modifier = Modifier.size(32.dp)
+                        colors = ButtonDefaults.buttonColors(containerColor = DvbYellow),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                        modifier = Modifier.height(36.dp)
                     ) {
-                        Icon(
-                            Icons.Default.Search,
-                            contentDescription = "Search",
-                            tint = DvbYellow
-                        )
+                        Text("Go", color = Color.Black, fontWeight = FontWeight.Bold)
                     }
+                    Spacer(modifier = Modifier.width(4.dp))
                 }
             }
         }
@@ -237,13 +236,7 @@ fun HomeScreen(navController: NavController) {
             Text(stringResource(R.string.to_map), color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 18.sp)
         }
 
-        Text(
-            text = stringResource(R.string.developed_by),
-            color = Color.White.copy(alpha = 0.4f),
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(top = 12.dp, bottom = 8.dp)
-        )
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 

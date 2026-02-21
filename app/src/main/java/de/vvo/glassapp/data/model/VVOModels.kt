@@ -11,7 +11,7 @@ data class Stop(
 )
 
 data class StopSearchResponse(
-    @SerializedName("Stops") val stops: List<Stop>
+    @SerializedName("Stops") val stops: List<Stop>?
 )
 
 data class Departure(
@@ -31,8 +31,8 @@ data class Platform(
 )
 
 data class DepartureResponse(
-    @SerializedName("Departures") val departures: List<Departure>,
-    @SerializedName("Name") val name: String
+    @SerializedName("Departures") val departures: List<Departure>?,
+    @SerializedName("Name") val name: String?
 )
 
 data class VehiclePin(
@@ -46,11 +46,11 @@ data class VehiclePin(
 )
 
 data class MapPinsResponse(
-    @SerializedName("Pins") val pins: List<VehiclePin>
+    @SerializedName("Pins") val pins: List<VehiclePin>?
 )
 
 data class MapStopsResponse(
-    @SerializedName("Stops") val stops: List<Stop>
+    @SerializedName("Stops") val stops: List<Stop>?
 )
 
 data class StopPoint(
@@ -62,11 +62,11 @@ data class StopPoint(
 )
 
 data class RouteResponse(
-    @SerializedName("Stops") val stops: List<StopPoint>
+    @SerializedName("Stops") val stops: List<StopPoint>?
 )
 
 data class TripResponse(
-    @SerializedName("Trips") val trips: List<Trip>
+    @SerializedName("Trips") val trips: List<Trip>?
 )
 
 data class Trip(

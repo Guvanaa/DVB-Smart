@@ -11,30 +11,30 @@ class TransitRepository(
     private val photonApi: PhotonApi
 ) {
     suspend fun searchStops(query: String) = withContext(Dispatchers.IO) {
-        vvoApi.searchStop(query).stops
+        vvoApi.searchStop(query).stops ?: emptyList()
     }
 
     suspend fun getDepartures(stopId: String) = withContext(Dispatchers.IO) {
-        vvoApi.getDepartures(stopId).departures
+        vvoApi.getDepartures(stopId).departures ?: emptyList()
     }
 
     suspend fun getMapPins(swLat: Double, swLon: Double, neLat: Double, neLon: Double) = withContext(Dispatchers.IO) {
-        vvoApi.getMapPins(swLat, swLon, neLat, neLon).pins
+        vvoApi.getMapPins(swLat, swLon, neLat, neLon).pins ?: emptyList()
     }
 
     suspend fun getStopsInArea(swLat: Double, swLon: Double, neLat: Double, neLon: Double) = withContext(Dispatchers.IO) {
-        vvoApi.getStopsInArea(swLat, swLon, neLat, neLon).stops
+        vvoApi.getStopsInArea(swLat, swLon, neLat, neLon).stops ?: emptyList()
     }
 
     suspend fun getRoute(tripId: String) = withContext(Dispatchers.IO) {
-        vvoApi.getRoute(tripId).stops
+        vvoApi.getRoute(tripId).stops ?: emptyList()
     }
 
     suspend fun getTrips(origin: String, destination: String) = withContext(Dispatchers.IO) {
-        vvoApi.getTrips(origin, destination).trips
+        vvoApi.getTrips(origin, destination).trips ?: emptyList()
     }
 
     suspend fun searchLocations(query: String) = withContext(Dispatchers.IO) {
-        photonApi.search(query).features
+        photonApi.search(query).features ?: emptyList()
     }
 }

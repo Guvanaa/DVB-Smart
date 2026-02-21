@@ -19,20 +19,20 @@
   <!-- App Icon Background -->
   <rect x="0" y="0" width="1024" height="1024" fill="url(#bgGrad)" />
 
-  <!-- Minimalist Tram/Bus Silhouette (Front View) -->
-  <g filter="url(#shadow)" transform="translate(256, 256)">
-    <!-- Main Body -->
-    <rect x="64" y="128" width="384" height="448" rx="80" fill="black" opacity="0.85" />
+  <!-- Centered Minimalist Tram/Bus Silhouette -->
+  <g filter="url(#shadow)">
+    <!-- Main Body (Top: 288, Bottom: 736, CenterY: 512) -->
+    <path d="M400,288 h224 a80,80 0,0 1,80 80 v288 a80,80 0,0 1,-80 80 h-224 a80,80 0,0 1,-80 -80 v-288 a80,80 0,0 1,80 -80 z" fill="black" opacity="0.85" />
 
     <!-- Windshield -->
-    <rect x="104" y="168" width="304" height="180" rx="40" fill="white" fill-opacity="0.2" stroke="white" stroke-width="2" stroke-opacity="0.5" />
+    <path d="M400,328 h224 a40,40 0,0 1,40 40 v100 a40,40 0,0 1,-40 40 h-224 a40,40 0,0 1,-40 -40 v-100 a40,40 0,0 1,40 -40 z" fill="white" fill-opacity="0.2" stroke="white" stroke-width="2" stroke-opacity="0.5" />
 
     <!-- Headlights -->
-    <circle cx="164" cy="480" r="24" fill="white" />
-    <circle cx="348" cy="480" r="24" fill="white" />
+    <circle cx="420" cy="640" r="24" fill="white" />
+    <circle cx="604" cy="640" r="24" fill="white" />
 
-    <!-- Pantograph (Tram specific) -->
-    <path d="M256 128 L256 64 L200 32 L312 32 L256 64" fill="none" stroke="black" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" />
+    <!-- Pantograph -->
+    <path d="M512 288 L512 224 L456 192 L568 192 L512 224" fill="none" stroke="black" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" />
   </g>
 
   <!-- Glass Sheen Overlay -->

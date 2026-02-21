@@ -19,26 +19,26 @@
             </gradient>
         </aapt:attr>
     </path>
-    <!-- Tram Body -->
+    <!-- Tram Body Centered -->
     <path
-        android:pathData="M400,384h224a80,80 0,0 1,80 80v288a80,80 0,0 1,-80 80h-224a80,80 0,0 1,-80 -80v-288a80,80 0,0 1,80 -80z"
+        android:pathData="M400,288h224a80,80 0,0 1,80 80v288a80,80 0,0 1,-80 80h-224a80,80 0,0 1,-80 -80v-288a80,80 0,0 1,80 -80z"
         android:fillColor="#000000"
         android:fillAlpha="0.85"/>
     <!-- Windshield -->
     <path
-        android:pathData="M400,424h224a40,40 0,0 1,40 40v100a40,40 0,0 1,-40 40h-224a40,40 0,0 1,-40 -40v-100a40,40 0,0 1,40 -40z"
+        android:pathData="M400,328h224a40,40 0,0 1,40 40v100a40,40 0,0 1,-40 40h-224a40,40 0,0 1,-40 -40v-100a40,40 0,0 1,40 -40z"
         android:fillColor="#ffffff"
         android:fillAlpha="0.2"/>
     <!-- Headlights -->
     <path
-        android:pathData="M420,736m-24,0a24,24 0,1 1,48 0a24,24 0,1 1,-48 0"
+        android:pathData="M420,640m-24,0a24,24 0,1 1,48 0a24,24 0,1 1,-48 0"
         android:fillColor="#ffffff"/>
     <path
-        android:pathData="M604,736m-24,0a24,24 0,1 1,48 0a24,24 0,1 1,-48 0"
+        android:pathData="M604,640m-24,0a24,24 0,1 1,48 0a24,24 0,1 1,-48 0"
         android:fillColor="#ffffff"/>
     <!-- Pantograph -->
     <path
-        android:pathData="M512,384L512,320L456,288L568,288L512,320"
+        android:pathData="M512,288L512,224L456,192L568,192L512,224"
         android:strokeColor="#000000"
         android:strokeWidth="20"
         android:strokeLineCap="round"

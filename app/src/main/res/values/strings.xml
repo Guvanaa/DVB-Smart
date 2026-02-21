@@ -25,4 +25,8 @@
     <string name="assistant_delay_info">Ich schaue im DVB-Netz nach... Es liegen aktuell keine größeren Störungen vor, aber die Linie 3 hat ca. 5 Minuten Verspätung am Hauptbahnhof.</string>
     <string name="assistant_thanks_response">Sehr gerne! Ich wünsche dir eine gute Fahrt mit dem DVB.</string>
     <string name="assistant_fallback">Das klingt interessant! Als dein DVB-Assistent kann ich dir am besten helfen, wenn du mich nach Haltestellen, Abfahrten oder Linien fragst.</string>
+    <string name="assistant_weather">In Dresden ist es gerade wechselhaft. Vergiss deinen Schirm nicht, wenn du zur Haltestelle läufst!</string>
+    <string name="assistant_nice_day">Einen wunderschönen Tag wünsche ich dir! Dresden sieht heute toll aus vom Fenster einer Straßenbahn.</string>
+    <string name="assistant_ticket_info">Tickets kaufst du am besten direkt in der DVB-App oder am Automaten. Ich kann dir hier leider noch keine Tickets verkaufen, aber ich zeige dir den Weg!</string>
+    <string name="assistant_did_you_know">Wusstest du schon? Die DVB befördert jedes Jahr über 150 Millionen Fahrgäste. Das ist eine Menge!</string>
 </resources>

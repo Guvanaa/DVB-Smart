@@ -158,18 +158,42 @@ class TransitViewModel(
             lowInput.contains("danke") || lowInput.contains("super") || lowInput.contains("cool") ->
                 context.getString(de.vvo.glassapp.R.string.assistant_thanks_response)
 
+            lowInput.contains("wetter") || lowInput.contains("regen") || lowInput.contains("sonne") ->
+                context.getString(de.vvo.glassapp.R.string.assistant_weather)
+
+            lowInput.contains("ticket") || lowInput.contains("fahrkarte") || lowInput.contains("preis") ->
+                context.getString(de.vvo.glassapp.R.string.assistant_ticket_info)
+
+            lowInput.contains("tag") || lowInput.contains("morgen") || lowInput.contains("abend") ->
+                context.getString(de.vvo.glassapp.R.string.assistant_nice_day)
+
+            lowInput.contains("wusstest") || lowInput.contains("fakten") || lowInput.contains("wissen") ->
+                context.getString(de.vvo.glassapp.R.string.assistant_did_you_know)
+
             else -> context.getString(de.vvo.glassapp.R.string.assistant_fallback)
         }
     }
 
     fun searchStops(query: String) {
+        if (query.length < 2) {
+            _searchResults.value = emptyList()
+            _locationResults.value = emptyList()
+            return
+        }
         viewModelScope.launch {
             try {
-                _searchResults.value = repository.searchStops(query)
-                _locationResults.value = repository.searchLocations(query)
+                val stops = repository.searchStops(query)
+                _searchResults.value = stops
             } catch (e: Exception) {
-                Log.e(TAG, "Search failed", e)
+                Log.e(TAG, "Stop search failed", e)
                 _searchResults.value = emptyList()
+            }
+            try {
+                val locations = repository.searchLocations(query)
+                _locationResults.value = locations
+            } catch (e: Exception) {
+                Log.e(TAG, "Location search failed", e)
+                _locationResults.value = emptyList()
             }
         }
     }

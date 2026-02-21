@@ -3,7 +3,7 @@ package de.vvo.glassapp.data.model
 import com.google.gson.annotations.SerializedName
 
 data class PhotonResponse(
-    val features: List<PhotonFeature>
+    val features: List<PhotonFeature>?
 )
 
 data class PhotonFeature(
