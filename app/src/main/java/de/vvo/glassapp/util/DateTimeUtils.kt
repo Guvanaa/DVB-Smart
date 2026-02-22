@@ -38,7 +38,7 @@ object DateTimeUtils {
      */
     fun calculateDelay(scheduled: String?, real: String?): Int? {
         val sMs = parseVvoDate(scheduled) ?: return null
-        val rMs = parseVvoDate(real) ?: return 0
+        val rMs = parseVvoDate(real) ?: return null
         return ((rMs - sMs) / 60000).toInt()
     }
 }

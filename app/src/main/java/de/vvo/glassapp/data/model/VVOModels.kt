@@ -119,7 +119,8 @@ data class Trip(
     val interchanges: Int,
     val departureTime: String,
     val arrivalTime: String,
-    val sections: List<Section>
+    val sections: List<Section>,
+    val mapData: List<String>? = null
 )
 
 data class Section(

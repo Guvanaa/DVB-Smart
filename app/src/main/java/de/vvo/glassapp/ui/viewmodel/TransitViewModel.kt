@@ -77,6 +77,12 @@ class TransitViewModel(
     private val _selectedVehicleRoute = MutableStateFlow<List<StopPoint>>(emptyList())
     val selectedVehicleRoute: StateFlow<List<StopPoint>> = _selectedVehicleRoute
 
+    private val _currentTripRoute = MutableStateFlow<List<LatLng>>(emptyList())
+    val currentTripRoute: StateFlow<List<LatLng>> = _currentTripRoute
+
+    private val _selectedTrip = MutableStateFlow<Trip?>(null)
+    val selectedTrip: StateFlow<Trip?> = _selectedTrip
+
     private val _selectedVehicle = MutableStateFlow<VehiclePin?>(null)
     val selectedVehicle: StateFlow<VehiclePin?> = _selectedVehicle
 
@@ -345,6 +351,7 @@ class TransitViewModel(
         _selectedStop.value = stop
         _selectedVehicle.value = null
         _selectedVehicleRoute.value = emptyList()
+        _currentTripRoute.value = emptyList()
         viewModelScope.launch {
             try {
                 if (stop.latitudeValue() == null) {
@@ -362,6 +369,7 @@ class TransitViewModel(
         _selectedVehicle.value = vehicle
         _selectedStop.value = null
         _selectedVehicleRoute.value = emptyList()
+        _currentTripRoute.value = emptyList()
         viewModelScope.launch {
             try {
                 _selectedVehicleRoute.value = repository.getRoute(vehicle.id)
@@ -375,6 +383,33 @@ class TransitViewModel(
         _selectedVehicle.value = null
         _selectedStop.value = null
         _selectedVehicleRoute.value = emptyList()
+        _currentTripRoute.value = emptyList()
+        _selectedTrip.value = null
+    }
+
+    fun selectTrip(trip: Trip) {
+        _selectedVehicle.value = null
+        _selectedStop.value = null
+        _selectedVehicleRoute.value = emptyList()
+        _selectedTrip.value = trip
+
+        val allPoints = mutableListOf<LatLng>()
+        trip.mapData?.forEach { pathStr ->
+            val parts = pathStr.split("|")
+            if (parts.size > 5) {
+                // Format: line|color|thickness|X1|Y1|X2|Y2|...
+                // Coordinates start at index 3
+                for (i in 3 until parts.size - 1 step 2) {
+                    val right = parts[i].toDoubleOrNull()
+                    val up = parts[i + 1].toDoubleOrNull()
+                    if (right != null && up != null) {
+                        val (lat, lon) = de.vvo.glassapp.util.CoordinateUtils.gk4ToWgs84(right, up)
+                        allPoints.add(LatLng(lat, lon))
+                    }
+                }
+            }
+        }
+        _currentTripRoute.value = allPoints
     }
 
     fun findTrips(originId: String?, destinationId: String, time: String? = null, isArrival: Boolean = false) {

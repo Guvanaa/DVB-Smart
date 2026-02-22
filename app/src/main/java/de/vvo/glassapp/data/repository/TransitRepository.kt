@@ -27,8 +27,8 @@ class TransitRepository(
                     val id = parts[0]
                     val name = parts[3]
                     val place = parts[2]
-                    val up = parts[4].toDoubleOrNull() ?: 0.0
-                    val right = parts[5].toDoubleOrNull() ?: 0.0
+                    val right = parts[4].toDoubleOrNull() ?: 0.0
+                    val up = parts[5].toDoubleOrNull() ?: 0.0
                     val (lat, lon) = CoordinateUtils.gk4ToWgs84(right, up)
                     Stop(id, name, place, lat, lon)
                 } else null
@@ -71,18 +71,18 @@ class TransitRepository(
                 "swlng" to swR.toLong().toString(),
                 "nelat" to neU.toLong().toString(),
                 "nelng" to neR.toLong().toString(),
-                "pintypes" to "Stop",
+                "pintypes" to listOf("Stop"),
                 "format" to "json"
             )
             val response = vvoApi.getMapPins(body)
             response.pins?.mapNotNull { pinStr ->
                 val parts = pinStr.split("|")
-                if (parts.size >= 6) {
+                if (parts.size >= 5) {
                     val id = parts[0]
-                    val name = parts[3]
-                    val place = parts[2]
+                    val place = parts[1]
+                    val name = parts[2]
+                    val right = parts[3].toDoubleOrNull() ?: 0.0
                     val up = parts[4].toDoubleOrNull() ?: 0.0
-                    val right = parts[5].toDoubleOrNull() ?: 0.0
                     val (lat, lon) = CoordinateUtils.gk4ToWgs84(right, up)
                     Stop(id, name, place, lat, lon)
                 } else null
@@ -102,7 +102,7 @@ class TransitRepository(
                 "swlng" to swR.toLong().toString(),
                 "nelat" to neU.toLong().toString(),
                 "nelng" to neR.toLong().toString(),
-                "pintypes" to "Vehicle", // Request only vehicles for this list
+                "pintypes" to listOf("Vehicle"),
                 "showtrips" to true,
                 "format" to "json"
             )
@@ -111,15 +111,21 @@ class TransitRepository(
                 val parts = pinStr.split("|")
                 if (parts.size >= 6) {
                     val id = parts[0]
-                    val up = parts[4].toDoubleOrNull() ?: 0.0
-                    val right = parts[5].toDoubleOrNull() ?: 0.0
+                    val right = parts[4].toDoubleOrNull() ?: 0.0
+                    val up = parts[5].toDoubleOrNull() ?: 0.0
                     val (lat, lon) = CoordinateUtils.gk4ToWgs84(right, up)
 
-                    if (id.startsWith("tr:") || parts.size > 8) {
+                    if (id.startsWith("tr:") || parts.size >= 6) {
                         // Trip/Vehicle
-                        val line = parts[3]
-                        val direction = parts[2]
-                        // Punctuality is usually at index 6 or later in the string
+                        // Field order for vehicles can vary, but usually:
+                        // id | type | direction | line | X | Y
+                        // OR
+                        // id | line | direction | type | X | Y
+
+                        val isIdTr = id.startsWith("tr:")
+                        val line = if (isIdTr) parts[3] else parts[1]
+                        val direction = if (isIdTr) parts[2] else parts[2]
+
                         val delay = if (parts.size > 6) parts[6].toIntOrNull() else null
                         VehiclePin(id, lat, lon, line, direction, "Vehicle", punctuality = delay)
                     } else null
@@ -159,7 +165,8 @@ class TransitRepository(
                             line = item.name,
                             direction = item.direction
                         )
-                    } ?: emptyList()
+                    } ?: emptyList(),
+                    mapData = route.mapData
                 )
             } ?: emptyList()
         } catch (e: Exception) {

@@ -9,8 +9,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -144,6 +143,8 @@ fun MapScreen(
     val selectedVehicle by viewModel.selectedVehicle.collectAsState()
     val selectedStop by viewModel.selectedStop.collectAsState()
     val routeStops by viewModel.selectedVehicleRoute.collectAsState()
+    val currentTripRoute by viewModel.currentTripRoute.collectAsState()
+    val selectedTrip by viewModel.selectedTrip.collectAsState()
 
     var hasInitialCentered by remember { mutableStateOf(false) }
     LaunchedEffect(userLocationState) {
@@ -242,8 +243,8 @@ fun MapScreen(
         }
     }
 
-    // POI Marker
-    LaunchedEffect(lat, lon, poiManager) {
+    // POI and Route Markers
+    LaunchedEffect(lat, lon, currentTripRoute, poiManager) {
         poiManager?.let { manager ->
             manager.deleteAll()
             if (lat != null && lon != null && stopId == null) {
@@ -252,6 +253,22 @@ fun MapScreen(
                     .withIconImage("marker-15")
                     .withIconColor("#007AFF")
                     .withIconSize(1.5f)
+                )
+            }
+            if (currentTripRoute.isNotEmpty()) {
+                // Origin
+                manager.create(SymbolOptions()
+                    .withLatLng(currentTripRoute.first())
+                    .withIconImage("marker-15")
+                    .withIconColor("#4CAF50") // Green for start
+                    .withIconSize(1.2f)
+                )
+                // Destination
+                manager.create(SymbolOptions()
+                    .withLatLng(currentTripRoute.last())
+                    .withIconImage("marker-15")
+                    .withIconColor("#F44336") // Red for end
+                    .withIconSize(1.2f)
                 )
             }
         }
@@ -280,8 +297,8 @@ fun MapScreen(
         }
     }
 
-    // Update route line
-    LaunchedEffect(routeStops, lineManager) {
+    // Update route line (from vehicles or from connection search)
+    LaunchedEffect(routeStops, currentTripRoute, lineManager) {
         lineManager?.let { manager ->
             manager.deleteAll()
             if (routeStops.isNotEmpty()) {
@@ -292,6 +309,23 @@ fun MapScreen(
                     .withLineWidth(4f)
                     .withLineOpacity(0.8f)
                 )
+            } else if (currentTripRoute.isNotEmpty()) {
+                manager.create(LineOptions()
+                    .withLatLngs(currentTripRoute)
+                    .withLineColor("#007AFF")
+                    .withLineWidth(6f)
+                    .withLineOpacity(0.8f)
+                )
+
+                // Zoom to fit route
+                if (currentTripRoute.size > 1) {
+                    val bounds = com.mapbox.mapboxsdk.geometry.LatLngBounds.Builder()
+                        .includes(currentTripRoute)
+                        .build()
+                    mapInstance?.animateCamera(
+                        com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLngBounds(bounds, 100)
+                    )
+                }
             }
         }
     }
@@ -427,7 +461,31 @@ fun MapScreen(
             }
         }
 
-        if (selectedVehicle != null) {
+        if (selectedTrip != null) {
+            Box(
+                modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(16.dp).navigationBarsPadding()
+            ) {
+                GlassCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text("Verbindung", fontWeight = FontWeight.ExtraBold, color = Color.White, fontSize = 20.sp)
+                        Spacer(Modifier.height(8.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.DirectionsWalk, contentDescription = null, tint = DvbYellow, modifier = Modifier.size(20.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text("${selectedTrip!!.departureTime} - ${selectedTrip!!.arrivalTime}", color = Color.White, fontWeight = FontWeight.Bold)
+                            Spacer(Modifier.weight(1f))
+                            Text("${selectedTrip!!.duration} min", color = DvbYellow, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+                IconButton(
+                    onClick = { viewModel.deselectAll() },
+                    modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
+                ) {
+                    Text("✕", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                }
+            }
+        } else if (selectedVehicle != null) {
             Box(
                 modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(16.dp).navigationBarsPadding()
             ) {

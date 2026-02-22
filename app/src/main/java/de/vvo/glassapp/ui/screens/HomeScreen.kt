@@ -442,7 +442,9 @@ fun HomeScreen(navController: NavController) {
                 if (trips.isNotEmpty() && !isSearchingTrips) {
                     item { SectionHeader(stringResource(R.string.connections)) }
                     items(trips) { trip ->
-                        TripItem(trip, navController)
+                    TripItem(trip, navController) { selectedTrip ->
+                        viewModel.selectTrip(selectedTrip)
+                    }
                     }
                 }
             }
@@ -745,12 +747,21 @@ fun FavoriteItem(
 }
 
 @Composable
-fun TripItem(trip: de.vvo.glassapp.data.model.Trip, navController: NavController) {
+fun TripItem(
+    trip: de.vvo.glassapp.data.model.Trip,
+    navController: NavController,
+    onTripSelected: (de.vvo.glassapp.data.model.Trip) -> Unit
+) {
     val haptic = LocalHapticFeedback.current
     GlassCard(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 6.dp),
+            .padding(vertical = 6.dp)
+            .clickable {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                onTripSelected(trip)
+                navController.navigate("map")
+            },
         shape = RoundedCornerShape(16.dp)
     ) {
         Column {

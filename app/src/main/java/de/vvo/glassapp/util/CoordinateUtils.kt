@@ -16,8 +16,8 @@ object CoordinateUtils {
     private const val REF_RIGHT = 4621213.0
 
     // High-precision scaling factors derived from multiple points in Dresden
-    private const val LAT_PER_UP = 0.0000089982
-    private const val LON_PER_RIGHT = 0.0000153915
+    private const val LAT_PER_UP = 0.000008994
+    private const val LON_PER_RIGHT = 0.00001429
 
     /**
      * Converts GK4 coordinates to WGS84 (GPS).
