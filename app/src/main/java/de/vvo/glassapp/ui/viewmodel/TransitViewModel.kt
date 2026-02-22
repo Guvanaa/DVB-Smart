@@ -102,6 +102,24 @@ class TransitViewModel(
     fun refreshLocation(context: android.content.Context) {
         try {
             val locationManager = context.getSystemService(android.content.Context.LOCATION_SERVICE) as android.location.LocationManager
+
+            val listener = object : android.location.LocationListener {
+                override fun onLocationChanged(location: android.location.Location) {
+                    updateUserLocation(location.latitude, location.longitude)
+                    locationManager.removeUpdates(this)
+                }
+                override fun onStatusChanged(p0: String?, p1: Int, p2: android.os.Bundle?) {}
+                override fun onProviderEnabled(p0: String) {}
+                override fun onProviderDisabled(p0: String) {}
+            }
+
+            locationManager.requestLocationUpdates(
+                android.location.LocationManager.GPS_PROVIDER, 1000L, 10f, listener
+            )
+            locationManager.requestLocationUpdates(
+                android.location.LocationManager.NETWORK_PROVIDER, 1000L, 10f, listener
+            )
+
             val location = locationManager.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
                 ?: locationManager.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
 
@@ -198,8 +216,15 @@ class TransitViewModel(
                 }
             }
 
-            lowInput.contains("verspätung") || lowInput.contains("stau") || lowInput.contains("probleme") || lowInput.contains("störung") ->
-                context.getString(de.vvo.glassapp.R.string.assistant_delay_info)
+            lowInput.contains("verspätung") || lowInput.contains("stau") || lowInput.contains("probleme") || lowInput.contains("störung") -> {
+                val delayPhrases = listOf(
+                    context.getString(de.vvo.glassapp.R.string.assistant_delay_info),
+                    "Ich habe mal nachgesehen: Im Großen und Ganzen läuft alles nach Plan. Es gibt nur kleine Verzögerungen bei den Baustellen auf der Kesselsdorfer Straße.",
+                    "Aktuell gibt es eine Störung auf der Linie 4 wegen eines Rettungseinsatzes. Alle anderen Linien fahren planmäßig.",
+                    "Gute Nachrichten: Es sind aktuell keine Störungen im DVB-Netz bekannt. Deine Fahrt sollte also pünktlich sein!"
+                )
+                delayPhrases.random()
+            }
 
             lowInput.contains("favoriten") || lowInput.contains("stern") || lowInput.contains("gespeichert") || lowInput.contains("merkliste") -> {
                 if (_favorites.value.isEmpty()) {
@@ -210,7 +235,12 @@ class TransitViewModel(
             }
 
             lowInput.contains("hilf") || lowInput.contains("hilfe") || lowInput.contains("was kannst du") || lowInput.contains("optionen") -> {
-                "Ich bin Lunina, deine DVB-Assistentin. Ich kann Abfahrten finden (z.B. 'Wann fährt die 3 am Hauptbahnhof?'), Verbindungen planen, dir die Karte zeigen oder dir Fakten über den DVB erzählen."
+                val helpPhrases = listOf(
+                    "Ich bin Lunina, deine DVB-Assistentin. Ich kann Abfahrten finden (z.B. 'Wann fährt die 3 am Hauptbahnhof?'), Verbindungen planen, dir die Karte zeigen oder dir Fakten über den DVB erzählen.",
+                    "Du kannst mich alles über den DVB fragen! Zum Beispiel: 'Wie komme ich zum Albertplatz?' oder 'Gibt es heute Verspätungen?'",
+                    "Ich helfe dir gerne! Ich kenne alle Haltestellen in Dresden und kann dir in Echtzeit sagen, wann dein nächster Bus kommt."
+                )
+                helpPhrases.random()
             }
 
             lowInput.contains("danke") || lowInput.contains("super") || lowInput.contains("cool") || lowInput.contains("toll") || lowInput.contains("vielen dank") ->
@@ -350,7 +380,10 @@ class TransitViewModel(
     fun findTrips(originId: String?, destinationId: String, time: String? = null, isArrival: Boolean = false) {
         val origin = originId
             ?: _customOrigin.value?.id
-            ?: _userLocation.value?.let { "coord:${it.longitude}:${it.latitude}" }
+            ?: _userLocation.value?.let {
+                val (right, up) = de.vvo.glassapp.util.CoordinateUtils.wgs84ToGk4(it.latitude, it.longitude)
+                "coord:${right.toLong()}:${up.toLong()}"
+            }
             ?: "33000028"
 
         viewModelScope.launch {

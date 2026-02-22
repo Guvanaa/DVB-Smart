@@ -142,6 +142,16 @@ fun MapScreen(
     val selectedStop by viewModel.selectedStop.collectAsState()
     val routeStops by viewModel.selectedVehicleRoute.collectAsState()
 
+    var hasInitialCentered by remember { mutableStateOf(false) }
+    LaunchedEffect(userLocationState) {
+        if (!hasInitialCentered && userLocationState != null && stopId == null && lat == null) {
+            mapInstance?.animateCamera(
+                com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLngZoom(userLocationState!!, 15.0)
+            )
+            hasInitialCentered = true
+        }
+    }
+
     LaunchedEffect(stopId) {
         stopId?.let { id ->
             viewModel.selectStop(de.vvo.glassapp.data.model.Stop(id, "", null, null, null))

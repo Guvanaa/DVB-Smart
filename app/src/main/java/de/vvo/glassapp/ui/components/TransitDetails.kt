@@ -8,6 +8,11 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.border
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DirectionsBus
+import androidx.compose.material.icons.filled.DirectionsRailway
+import androidx.compose.material.icons.filled.Tram
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -49,7 +54,16 @@ fun StopDetailSheet(
                                 .background(DvbYellow, RoundedCornerShape(6.dp))
                                 .padding(horizontal = 6.dp, vertical = 2.dp)
                         ) {
-                            Text(dep.lineName, color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                val icon = when {
+                                    dep.mot?.lowercase()?.contains("bus") == true -> Icons.Default.DirectionsBus
+                                    dep.mot?.lowercase()?.contains("tram") == true -> Icons.Default.Tram
+                                    else -> Icons.Default.DirectionsRailway
+                                }
+                                Icon(icon, contentDescription = null, tint = Color.Black, modifier = Modifier.size(14.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(dep.lineName, color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            }
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
@@ -106,20 +120,21 @@ fun RouteDetailSheet(
                         // Fieberthermometer (Thermometer) logic
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.width(24.dp)
+                            modifier = Modifier.width(32.dp)
                         ) {
+                            val isFuture = stop.time != null // Simple heuristic
                             Box(
                                 modifier = Modifier
-                                    .size(12.dp)
-                                    .background(if (index == 0) DvbYellow else Color.White, CircleShape)
+                                    .size(14.dp)
+                                    .background(if (index == 0) DvbYellow else if (isFuture) Color.White else Color.White.copy(alpha = 0.3f), CircleShape)
                                     .border(2.dp, Color.Black, CircleShape)
                             )
                             if (index < stops.size - 1) {
                                 Box(
                                     modifier = Modifier
-                                        .width(2.dp)
-                                        .height(40.dp)
-                                        .background(Color.White.copy(alpha = 0.5f))
+                                        .width(3.dp)
+                                        .height(48.dp)
+                                        .background(if (isFuture) Color.White.copy(alpha = 0.6f) else Color.White.copy(alpha = 0.2f))
                                 )
                             }
                         }
@@ -127,8 +142,19 @@ fun RouteDetailSheet(
                         Spacer(modifier = Modifier.width(12.dp))
 
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(stop.name, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                            Text(stop.time ?: "", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), fontSize = 12.sp)
+                            Text(
+                                stop.name,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 16.sp,
+                                maxLines = 1
+                            )
+                            Text(
+                                stop.time ?: "--:--",
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium
+                            )
                         }
 
                         if (stop.delay != null && stop.delay != 0) {

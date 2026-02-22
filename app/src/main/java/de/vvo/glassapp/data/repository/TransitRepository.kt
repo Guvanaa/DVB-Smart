@@ -63,7 +63,7 @@ class TransitRepository(
                 "swlng" to swR.toLong().toString(),
                 "nelat" to neU.toLong().toString(),
                 "nelng" to neR.toLong().toString(),
-                "pintypes" to listOf("Stop"),
+                "pintypes" to "Stop",
                 "format" to "json"
             )
             val response = vvoApi.getMapPins(body)
@@ -94,7 +94,7 @@ class TransitRepository(
                 "swlng" to swR.toLong().toString(),
                 "nelat" to neU.toLong().toString(),
                 "nelng" to neR.toLong().toString(),
-                "pintypes" to listOf("Stop", "Vehicle"),
+                "pintypes" to "Stop,Vehicle",
                 "showtrips" to true,
                 "format" to "json"
             )

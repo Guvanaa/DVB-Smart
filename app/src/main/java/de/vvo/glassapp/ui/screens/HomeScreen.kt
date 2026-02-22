@@ -153,201 +153,196 @@ fun HomeScreen(navController: NavController) {
         )
 
         // UI Overlay
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 24.dp)
                 .statusBarsPadding(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-        Spacer(modifier = Modifier.height(24.dp))
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
 
-        // Clean Title
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = "DVB-Smart",
-                fontSize = 42.sp,
-                fontWeight = FontWeight.Black,
-                color = MaterialTheme.colorScheme.onSurface,
-                letterSpacing = (-1.5).sp
-            )
-            Text(
-                text = "Dein Weg durch Dresden.",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-            )
-        }
+                // Clean Title
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "DVB-Smart",
+                        fontSize = 42.sp,
+                        fontWeight = FontWeight.Black,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        letterSpacing = (-1.5).sp
+                    )
+                    Text(
+                        text = "Dein Weg durch Dresden.",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+                }
 
-        Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = stringResource(R.string.search_hint),
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White.copy(alpha = 0.9f)
-            )
-            val infiniteTransition = androidx.compose.animation.core.rememberInfiniteTransition()
-            val scale by infiniteTransition.animateFloat(
-                initialValue = 1f,
-                targetValue = 1.12f,
-                animationSpec = androidx.compose.animation.core.infiniteRepeatable(
-                    animation = androidx.compose.animation.core.tween(1200, easing = LinearEasing),
-                    repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
-                )
-            )
-            val offsetY by infiniteTransition.animateFloat(
-                initialValue = 0f,
-                targetValue = -5f,
-                animationSpec = androidx.compose.animation.core.infiniteRepeatable(
-                    animation = androidx.compose.animation.core.tween(2000, easing = FastOutSlowInEasing),
-                    repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
-                )
-            )
-
-            IconButton(
-                onClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    navController.navigate("assistant")
-                },
-                modifier = Modifier.graphicsLayer(
-                    scaleX = scale,
-                    scaleY = scale,
-                    translationY = offsetY
-                )
-            ) {
-                GlassCard(
-                    modifier = Modifier.size(60.dp),
-                    shape = RoundedCornerShape(18.dp)
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Icon(
-                        Icons.Default.AutoAwesome,
-                        contentDescription = "AI Assistant",
-                        tint = DvbYellow,
-                        modifier = Modifier.size(36.dp)
+                    Text(
+                        text = stringResource(R.string.search_hint),
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White.copy(alpha = 0.9f)
                     )
-                }
-            }
-        }
-
-        // Connection Search Panel
-        GlassCard(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 20.dp),
-            shape = RoundedCornerShape(24.dp),
-            padding = 16.dp
-        ) {
-            Column {
-                // Origin
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = if (customOrigin == null) Icons.Default.MyLocation else Icons.Default.Place,
-                        contentDescription = null,
-                        tint = DvbYellow,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
-                        if (originQuery.isEmpty() && customOrigin == null) {
-                            Text("Mein Standort (oder Start suchen...)", color = Color.White.copy(alpha = 0.4f), fontSize = 16.sp)
-                        }
-                        BasicTextField(
-                            value = if (customOrigin != null && originQuery.isEmpty()) customOrigin!!.name else originQuery,
-                            onValueChange = {
-                                originQuery = it
-                                isSearchingOrigin = it.isNotEmpty()
-                                if (it.isNotEmpty()) viewModel.searchStops(it)
-                            },
-                            textStyle = TextStyle(
-                                color = if (customOrigin != null && originQuery.isEmpty()) DvbYellow else Color.White,
-                                fontSize = 16.sp,
-                                fontWeight = if (customOrigin != null) FontWeight.Bold else FontWeight.Normal
-                            ),
-                            modifier = Modifier.fillMaxWidth()
+                    val infiniteTransition = rememberInfiniteTransition()
+                    val scale by infiniteTransition.animateFloat(
+                        initialValue = 1f,
+                        targetValue = 1.12f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(1200, easing = LinearEasing),
+                            repeatMode = RepeatMode.Reverse
                         )
-                    }
-                    if (customOrigin != null || originQuery.isNotEmpty()) {
-                        IconButton(onClick = {
-                            viewModel.setCustomOrigin(null)
-                            originQuery = ""
-                            isSearchingOrigin = false
-                        }, modifier = Modifier.size(24.dp)) {
-                            Text("✕", color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp)
+                    )
+                    val offsetY by infiniteTransition.animateFloat(
+                        initialValue = 0f,
+                        targetValue = -5f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(2000, easing = FastOutSlowInEasing),
+                            repeatMode = RepeatMode.Reverse
+                        )
+                    )
+
+                    IconButton(
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            navController.navigate("assistant")
+                        },
+                        modifier = Modifier.graphicsLayer(
+                            scaleX = scale * 1.15f,
+                            scaleY = scale * 1.15f,
+                            translationY = offsetY
+                        )
+                    ) {
+                        GlassCard(
+                            modifier = Modifier.size(76.dp),
+                            shape = RoundedCornerShape(22.dp),
+                            borderWidth = 2.5f
+                        ) {
+                            Icon(
+                                Icons.Default.AutoAwesome,
+                                contentDescription = "AI Assistant",
+                                tint = DvbYellow,
+                                modifier = Modifier.size(44.dp)
+                            )
                         }
                     }
                 }
 
-                Divider(modifier = Modifier.padding(vertical = 12.dp), color = Color.White.copy(alpha = 0.1f))
-
-                // Time Selection
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable {
-                    showTimeDialog = true
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                }) {
-                    Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = DvbYellow, modifier = Modifier.size(20.dp))
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        if (isArrivalMode) "Ankunft" else "Abfahrt",
-                        color = Color.White,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                    Spacer(modifier = Modifier.weight(1f))
-                    Text(
-                        selectedTime ?: "Jetzt",
-                        color = DvbYellow,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                Divider(modifier = Modifier.padding(vertical = 12.dp), color = Color.White.copy(alpha = 0.1f))
-
-                // Destination / Search
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Place, contentDescription = null, tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(20.dp))
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
-                        if (searchQuery.isEmpty()) {
-                            Text("Ziel suchen...", color = Color.White.copy(alpha = 0.4f), fontSize = 16.sp)
-                        }
-                        BasicTextField(
-                            value = searchQuery,
-                            onValueChange = {
-                                searchQuery = it
-                                isSearchingOrigin = false
-                            },
-                            textStyle = TextStyle(color = Color.White, fontSize = 16.sp),
-                            modifier = Modifier.fillMaxWidth(),
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                            keyboardActions = KeyboardActions(onSearch = {
-                                if (searchQuery.isNotEmpty()) {
-                                    viewModel.searchStops(searchQuery)
-                                    keyboardController?.hide()
+                // Connection Search Panel
+                GlassCard(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 20.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    padding = 16.dp
+                ) {
+                    Column {
+                        // Origin
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = if (customOrigin == null) Icons.Default.MyLocation else Icons.Default.Place,
+                                contentDescription = null,
+                                tint = DvbYellow,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                                if (originQuery.isEmpty() && customOrigin == null) {
+                                    Text("Mein Standort (oder Start suchen...)", color = Color.White.copy(alpha = 0.4f), fontSize = 16.sp)
                                 }
-                            })
-                        )
+                                BasicTextField(
+                                    value = if (customOrigin != null && originQuery.isEmpty()) customOrigin!!.name else originQuery,
+                                    onValueChange = {
+                                        originQuery = it
+                                        isSearchingOrigin = it.isNotEmpty()
+                                        if (it.isNotEmpty()) viewModel.searchStops(it)
+                                    },
+                                    textStyle = TextStyle(
+                                        color = if (customOrigin != null && originQuery.isEmpty()) DvbYellow else Color.White,
+                                        fontSize = 16.sp,
+                                        fontWeight = if (customOrigin != null) FontWeight.Bold else FontWeight.Normal
+                                    ),
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                            if (customOrigin != null || originQuery.isNotEmpty()) {
+                                IconButton(onClick = {
+                                    viewModel.setCustomOrigin(null)
+                                    originQuery = ""
+                                    isSearchingOrigin = false
+                                }, modifier = Modifier.size(24.dp)) {
+                                    Text("✕", color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp)
+                                }
+                            }
+                        }
+
+                        Divider(modifier = Modifier.padding(vertical = 12.dp), color = Color.White.copy(alpha = 0.1f))
+
+                        // Time Selection
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable {
+                            showTimeDialog = true
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        }) {
+                            Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = DvbYellow, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                if (isArrivalMode) "Ankunft" else "Abfahrt",
+                                color = Color.White,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Spacer(modifier = Modifier.weight(1f))
+                            Text(
+                                selectedTime ?: "Jetzt",
+                                color = DvbYellow,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        Divider(modifier = Modifier.padding(vertical = 12.dp), color = Color.White.copy(alpha = 0.1f))
+
+                        // Destination / Search
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Place, contentDescription = null, tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                                if (searchQuery.isEmpty()) {
+                                    Text("Ziel suchen...", color = Color.White.copy(alpha = 0.4f), fontSize = 16.sp)
+                                }
+                                BasicTextField(
+                                    value = searchQuery,
+                                    onValueChange = {
+                                        searchQuery = it
+                                        isSearchingOrigin = false
+                                    },
+                                    textStyle = TextStyle(color = Color.White, fontSize = 16.sp),
+                                    modifier = Modifier.fillMaxWidth(),
+                                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                                    keyboardActions = KeyboardActions(onSearch = {
+                                        if (searchQuery.isNotEmpty()) {
+                                            viewModel.searchStops(searchQuery)
+                                            keyboardController?.hide()
+                                        }
+                                    })
+                                )
+                            }
+                        }
                     }
                 }
             }
-        }
 
-        AnimatedVisibility(
-            visible = searchQuery.isNotEmpty() || originQuery.isNotEmpty(),
-            enter = fadeIn() + expandVertically(),
-            exit = fadeOut() + shrinkVertically(),
-            modifier = Modifier.weight(1f)
-        ) {
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
-                item {
-                    SectionHeader(if (isSearchingOrigin) "Start wählen" else "Haltestellen")
-                }
+            if (searchQuery.isNotEmpty() || originQuery.isNotEmpty()) {
+                item { SectionHeader(if (isSearchingOrigin) "Start wählen" else "Haltestellen") }
                 val results = if (isSearchingOrigin) originSearchResults else searchResults
                 items(results) { stop ->
                     GlassSearchResultItem(
@@ -372,20 +367,21 @@ fun HomeScreen(navController: NavController) {
                         }
                     }
                 }
-                item {
-                    SectionHeader("Adressen & Orte")
-                }
+                item { SectionHeader("Adressen & Orte") }
                 items(locationResults) { feature ->
                     val coords = feature.geometry.coordinates
                     val addressId = "coord:${coords[0]}:${coords[1]}"
+                    val street = feature.properties.street ?: ""
+                    val house = feature.properties.housenumber ?: ""
+                    val city = feature.properties.city ?: "Dresden"
+                    val fullAddress = if (street.isNotEmpty()) "$street $house, $city" else city
+
                     GlassSearchResultItem(
                         title = feature.properties.name,
-                        subtitle = feature.properties.city ?: "Dresden",
+                        subtitle = fullAddress,
                         icon = Icons.Default.Place,
                         isFavorite = favorites.any { it.stopId == addressId },
-                        onFavoriteClick = {
-                            viewModel.toggleFavorite(feature.properties.name, addressId)
-                        }
+                        onFavoriteClick = { viewModel.toggleFavorite(feature.properties.name, addressId) }
                     ) {
                         if (coords.size >= 2) {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -411,81 +407,66 @@ fun HomeScreen(navController: NavController) {
                         }
                     }
                 }
-            }
-        }
-
-        if (searchQuery.isEmpty()) {
-            // Favorites Section
-            SectionHeader(stringResource(R.string.favorites))
-
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.padding(bottom = 28.dp)
-            ) {
-                items(favorites) { favorite ->
-                    FavoriteItem(
-                        favorite = favorite,
-                        onClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            viewModel.findTrips(null, favorite.stopId, selectedTime, isArrivalMode)
-                        },
-                        onLongClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            favoriteNewName = favorite.name
-                            showEditFavoriteDialog = favorite
+            } else {
+                // Favorites Section
+                item { SectionHeader(stringResource(R.string.favorites)) }
+                item {
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier.padding(bottom = 28.dp)
+                    ) {
+                        items(favorites) { favorite ->
+                            FavoriteItem(
+                                favorite = favorite,
+                                onClick = {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    viewModel.findTrips(null, favorite.stopId, selectedTime, isArrivalMode)
+                                },
+                                onLongClick = {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    favoriteNewName = favorite.name
+                                    showEditFavoriteDialog = favorite
+                                }
+                            )
                         }
-                    )
+                    }
                 }
-            }
 
-            AnimatedVisibility(
-                visible = isSearchingTrips,
-                enter = fadeIn(),
-                exit = fadeOut()
-            ) {
-                Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = DvbYellow)
+                if (isSearchingTrips) {
+                    item {
+                        Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = DvbYellow)
+                        }
+                    }
                 }
-            }
 
-            AnimatedVisibility(
-                visible = trips.isNotEmpty() && !isSearchingTrips,
-                enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically(),
-                modifier = Modifier.weight(1f)
-            ) {
-                Column {
-                    SectionHeader(stringResource(R.string.connections))
-                    LazyColumn(modifier = Modifier.fillMaxSize()) {
-                        items(trips) { trip ->
+                if (trips.isNotEmpty() && !isSearchingTrips) {
+                    item { SectionHeader(stringResource(R.string.connections)) }
+                    items(trips) { trip ->
                         TripItem(trip, navController)
-                        }
                     }
                 }
             }
 
-            if (trips.isEmpty() && !isSearchingTrips) {
-                Spacer(modifier = Modifier.weight(1f))
+            item {
+                Spacer(modifier = Modifier.height(32.dp))
+                Button(
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        navController.navigate("map")
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(64.dp)
+                        .padding(bottom = 8.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = DvbYellow),
+                    shape = RoundedCornerShape(18.dp)
+                ) {
+                    Text(stringResource(R.string.to_map), color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                }
+                Spacer(modifier = Modifier.height(48.dp))
             }
         }
-
-        Button(
-            onClick = {
-                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                navController.navigate("map")
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-                .padding(bottom = 8.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = DvbYellow),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Text(stringResource(R.string.to_map), color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-    }
     }
 
     // Time Settings Sheet

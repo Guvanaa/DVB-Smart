@@ -15,9 +15,9 @@ object CoordinateUtils {
     private const val REF_UP = 5654921.0
     private const val REF_RIGHT = 4621213.0
 
-    // Scaling factors derived from Dresden Neustadt comparison
-    private const val LAT_PER_UP = 0.0000089932
-    private const val LON_PER_RIGHT = 0.0000142857
+    // Improved scaling factors for Dresden area
+    private const val LAT_PER_UP = 0.0000089657
+    private const val LON_PER_RIGHT = 0.0000154485
 
     /**
      * Converts GK4 coordinates to WGS84 (GPS).

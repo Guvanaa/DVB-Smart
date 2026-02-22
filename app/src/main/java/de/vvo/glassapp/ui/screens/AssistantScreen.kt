@@ -120,13 +120,20 @@ fun AssistantScreen(navController: NavController) {
             }
 
             // Quick Buttons
-            val quickActions = listOf(
-                "Wann fährt die 3?",
-                "Öffne die Karte",
-                "Zeig Favoriten",
-                "Fakten über DVB",
-                "Preise & Tickets"
-            )
+            val quickActions = remember {
+                listOf(
+                    "Wann fährt die 3?",
+                    "Öffne die Karte",
+                    "Zeig Favoriten",
+                    "Fakten über DVB",
+                    "Preise & Tickets",
+                    "Wie ist das Wetter?",
+                    "Hilfe",
+                    "Vom Postplatz zum Hbf",
+                    "Wann kommt die nächste Bahn?",
+                    "Gibt es Verspätungen?"
+                ).shuffled().take(5)
+            }
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.padding(bottom = 16.dp),

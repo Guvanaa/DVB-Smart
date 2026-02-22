@@ -9,19 +9,22 @@ import androidx.compose.ui.unit.dp
 
 import androidx.compose.foundation.clickable
 
+import de.vvo.glassapp.ui.components.glassEffect
+
 @Composable
 fun GlassCard(
     modifier: Modifier = Modifier,
     shape: RoundedCornerShape = RoundedCornerShape(24.dp),
     padding: androidx.compose.ui.unit.Dp? = null,
+    borderWidth: Float = 1.2f,
     onClick: (() -> Unit)? = null,
     content: @Composable BoxScope.() -> Unit
 ) {
     Box(
         modifier = if (onClick != null) {
-            modifier.clickable(onClick = onClick).glassEffect(shape = shape, padding = padding)
+            modifier.clickable(onClick = onClick).glassEffect(shape = shape, padding = padding, borderWidth = borderWidth)
         } else {
-            modifier.glassEffect(shape = shape, padding = padding)
+            modifier.glassEffect(shape = shape, padding = padding, borderWidth = borderWidth)
         }
     ) {
         content()
