@@ -145,10 +145,11 @@ fun HomeScreen(navController: NavController) {
         )
 
         // Semi-transparent overlay to improve UI contrast
+        val isDark = androidx.compose.foundation.isSystemInDarkTheme()
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.45f))
+                .background(if (isDark) Color.Black.copy(alpha = 0.45f) else Color.White.copy(alpha = 0.25f))
         )
 
         // UI Overlay
@@ -167,14 +168,14 @@ fun HomeScreen(navController: NavController) {
                 text = "DVB-Smart",
                 fontSize = 42.sp,
                 fontWeight = FontWeight.Black,
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onSurface,
                 letterSpacing = (-1.5).sp
             )
             Text(
                 text = "Dein Weg durch Dresden.",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Medium,
-                color = Color.White.copy(alpha = 0.7f)
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
             )
         }
 
@@ -375,12 +376,17 @@ fun HomeScreen(navController: NavController) {
                     SectionHeader("Adressen & Orte")
                 }
                 items(locationResults) { feature ->
+                    val coords = feature.geometry.coordinates
+                    val addressId = "coord:${coords[0]}:${coords[1]}"
                     GlassSearchResultItem(
                         title = feature.properties.name,
                         subtitle = feature.properties.city ?: "Dresden",
-                        icon = Icons.Default.Place
+                        icon = Icons.Default.Place,
+                        isFavorite = favorites.any { it.stopId == addressId },
+                        onFavoriteClick = {
+                            viewModel.toggleFavorite(feature.properties.name, addressId)
+                        }
                     ) {
-                        val coords = feature.geometry.coordinates
                         if (coords.size >= 2) {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             val stop = de.vvo.glassapp.data.model.Stop(

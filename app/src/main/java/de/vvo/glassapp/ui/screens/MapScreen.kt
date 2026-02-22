@@ -4,6 +4,8 @@ import android.Manifest
 import android.graphics.Color as AndroidColor
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -33,10 +35,61 @@ import com.mapbox.mapboxsdk.plugins.annotation.SymbolManager
 import com.mapbox.mapboxsdk.plugins.annotation.SymbolOptions
 import de.vvo.glassapp.R
 import de.vvo.glassapp.data.model.VehiclePin
-import de.vvo.glassapp.ui.components.GlassCard
+import de.vvo.glassapp.ui.components.*
 import de.vvo.glassapp.ui.theme.DvbYellow
 import de.vvo.glassapp.ui.viewmodel.TransitViewModel
 import kotlinx.coroutines.delay
+
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+
+@Composable
+fun VehicleListSheet(
+    pins: List<VehiclePin>,
+    onVehicleClick: (VehiclePin) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    GlassCard(
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(max = 300.dp),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp)
+    ) {
+        LazyColumn(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(pins) { pin ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onVehicleClick(pin) },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val statusColor = when {
+                        (pin.punctuality ?: 0) < 0 -> Color(0xFF4CAF50)
+                        (pin.punctuality ?: 0) == 0 -> Color(0xFFFFCC00)
+                        else -> Color(0xFFF44336)
+                    }
+
+                    Box(
+                        modifier = Modifier.background(statusColor, androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(pin.line, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Column {
+                        Text(pin.direction, color = Color.White, fontWeight = FontWeight.Medium, fontSize = 16.sp)
+                        val delay = pin.punctuality ?: 0
+                        val delayText = if (delay > 0) "+$delay min" else if (delay < 0) "$delay min" else "Pünktlich"
+                        Text(delayText, color = if (delay > 0) Color(0xFFF44336) else if (delay < 0) Color(0xFF4CAF50) else Color.White.copy(alpha = 0.6f), fontSize = 12.sp)
+                    }
+                }
+            }
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -131,36 +184,48 @@ fun MapScreen(
 
     // Update vehicle symbols
     LaunchedEffect(pins, vehicleManager) {
-        vehicleManager?.let { manager ->
+        val manager = vehicleManager ?: return@LaunchedEffect
+        val map = mapInstance ?: return@LaunchedEffect
+        map.getStyle { style ->
             try {
-                android.util.Log.d("MapScreen", "Updating vehicle symbols: ${pins.size}")
                 manager.deleteAll()
                 pins.forEach { pin ->
-                    val color = when {
+                    val statusColor = when {
                         (pin.punctuality ?: 0) < 0 -> "#4CAF50"
                         (pin.punctuality ?: 0) == 0 -> "#FFCC00"
                         else -> "#F44336"
                     }
-                    val icon = when (pin.type) {
-                        "Tram" -> "tram"
-                        "CityBus", "Bus" -> "bus"
-                        "SuburbanRailway", "Train" -> "rail"
-                        else -> "marker-15"
+
+                    val imageId = "icon_${pin.line}_${statusColor}"
+                    if (style.getImage(imageId) == null) {
+                        val size = 70
+                        val b = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888)
+                        val c = android.graphics.Canvas(b)
+                        val p = android.graphics.Paint()
+                        p.isAntiAlias = true
+                        p.color = android.graphics.Color.parseColor(statusColor)
+                        c.drawRoundRect(0f, 0f, size.toFloat(), size.toFloat(), 15f, 15f, p)
+
+                        p.color = android.graphics.Color.WHITE
+                        p.textSize = 28f
+                        p.textAlign = android.graphics.Paint.Align.CENTER
+                        p.isFakeBoldText = true
+                        val xPos = size / 2f
+                        val yPos = (size / 2f - (p.descent() + p.ascent()) / 2f)
+                        c.drawText(pin.line, xPos, yPos, p)
+                        style.addImage(imageId, b)
                     }
+
                     manager.create(SymbolOptions()
                         .withLatLng(LatLng(pin.latitudeValue(), pin.longitudeValue()))
-                        .withTextField(pin.line)
-                        .withTextSize(12f)
-                        .withTextColor("#000000")
-                        .withTextHaloColor("#FFFFFF")
-                        .withTextHaloWidth(2.0f)
-                        .withIconImage(icon)
-                        .withIconColor(color)
-                        .withIconSize(1.2f)
+                        .withIconImage(imageId)
+                        .withIconSize(1.0f)
                         .withData(com.google.gson.JsonPrimitive("v_${pin.id}"))
                     )
                 }
-            } catch (e: Exception) { }
+            } catch (e: Exception) {
+                android.util.Log.e("MapScreen", "Error updating vehicle symbols", e)
+            }
         }
     }
 
@@ -255,9 +320,9 @@ fun MapScreen(
                                 return b
                             }
 
-                            style.addImage("tram", createCircleBitmap(40, android.graphics.Color.parseColor("#FFCC00")))
-                            style.addImage("bus", createCircleBitmap(40, android.graphics.Color.parseColor("#FFCC00")))
-                            style.addImage("rail", createCircleBitmap(40, android.graphics.Color.parseColor("#FFCC00")))
+                            style.addImage("v_green", createCircleBitmap(44, android.graphics.Color.parseColor("#4CAF50")))
+                            style.addImage("v_yellow", createCircleBitmap(44, android.graphics.Color.parseColor("#FFCC00")))
+                            style.addImage("v_red", createCircleBitmap(44, android.graphics.Color.parseColor("#F44336")))
                             style.addImage("marker-15", createCircleBitmap(32, android.graphics.Color.RED))
                             style.addImage("dot-11", createCircleBitmap(16, android.graphics.Color.WHITE))
 
@@ -380,14 +445,34 @@ fun MapScreen(
                 }
             }
         } else {
+            var showVehicleList by remember { mutableStateOf(false) }
+
             Box(
                 modifier = Modifier.align(Alignment.BottomCenter).padding(24.dp).navigationBarsPadding()
             ) {
-                GlassCard(modifier = Modifier.fillMaxWidth().height(90.dp)) {
+                GlassCard(
+                    modifier = Modifier.fillMaxWidth().height(90.dp),
+                    onClick = { showVehicleList = !showVehicleList }
+                ) {
                     Column(modifier = Modifier.padding(8.dp)) {
-                        Text(stringResource(R.string.live_traffic), fontWeight = FontWeight.ExtraBold, color = Color.White, fontSize = 18.sp)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(stringResource(R.string.live_traffic), fontWeight = FontWeight.ExtraBold, color = Color.White, fontSize = 18.sp)
+                            Spacer(Modifier.weight(1f))
+                            if (showVehicleList) Text("✕", color = Color.White.copy(alpha = 0.6f))
+                        }
                         Text(stringResource(R.string.vehicles_nearby, pins.size), color = Color.White.copy(alpha = 0.8f))
                     }
+                }
+
+                if (showVehicleList) {
+                    VehicleListSheet(
+                        pins = pins,
+                        onVehicleClick = { pin ->
+                            viewModel.selectVehicle(pin)
+                            showVehicleList = false
+                        },
+                        modifier = Modifier.padding(bottom = 100.dp)
+                    )
                 }
             }
         }

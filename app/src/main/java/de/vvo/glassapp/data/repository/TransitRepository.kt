@@ -94,7 +94,8 @@ class TransitRepository(
                 "swlng" to swR.toLong().toString(),
                 "nelat" to neU.toLong().toString(),
                 "nelng" to neR.toLong().toString(),
-                "pintypes" to listOf("Stop"), // For now focus on stops/vehicles
+                "pintypes" to listOf("Stop", "Vehicle"),
+                "showtrips" to true,
                 "format" to "json"
             )
             val response = vvoApi.getMapPins(body)
@@ -102,11 +103,20 @@ class TransitRepository(
                 val parts = pinStr.split("|")
                 if (parts.size >= 6) {
                     val id = parts[0]
-                    val name = parts[3]
                     val up = parts[4].toDoubleOrNull() ?: 0.0
                     val right = parts[5].toDoubleOrNull() ?: 0.0
                     val (lat, lon) = CoordinateUtils.gk4ToWgs84(right, up)
-                    VehiclePin(id, lat, lon, "", name, "Stop")
+
+                    if (id.startsWith("tr:")) {
+                        // Trip/Vehicle
+                        val line = parts[3]
+                        val direction = parts[2]
+                        val delay = if (parts.size > 6) parts[6].toIntOrNull() else 0
+                        VehiclePin(id, lat, lon, line, direction, "Vehicle", punctuality = delay)
+                    } else if (id.length >= 8) {
+                        // Likely a stop
+                        null // We handle stops in getStopsInArea
+                    } else null
                 } else null
             } ?: emptyList()
         } catch (e: Exception) {
@@ -153,9 +163,18 @@ class TransitRepository(
     }
 
     suspend fun getRoute(tripId: String): List<StopPoint> = withContext(Dispatchers.IO) {
-        // This endpoint requires tripid and time from dm response.
-        // For simplicity and to fix map display, we focus on other things first.
-        emptyList()
+        try {
+            // tripId here is usually "tr:XXXXX"
+            val body = mapOf(
+                "tripid" to tripId,
+                "format" to "json"
+            )
+            val response = vvoApi.getTripDetails(body)
+            response.stops ?: emptyList()
+        } catch (e: Exception) {
+            android.util.Log.e("TransitRepository", "Route failed", e)
+            emptyList()
+        }
     }
 
     suspend fun searchLocations(query: String) = withContext(Dispatchers.IO) {

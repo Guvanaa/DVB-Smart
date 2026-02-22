@@ -219,8 +219,8 @@ class TransitViewModel(
             lowInput.contains("wetter") || lowInput.contains("regen") || lowInput.contains("sonne") || lowInput.contains("kalt") || lowInput.contains("warm") ->
                 context.getString(de.vvo.glassapp.R.string.assistant_weather)
 
-            lowInput.contains("ticket") || lowInput.contains("fahrkarte") || lowInput.contains("preis") || lowInput.contains("kosten") ->
-                context.getString(de.vvo.glassapp.R.string.assistant_ticket_info)
+            lowInput.contains("ticket") || lowInput.contains("fahrkarte") || lowInput.contains("preis") || lowInput.contains("kosten") || lowInput.contains("fairtiq") ->
+                "Für Tickets empfehle ich dir die FAIRTIQ-App! Einfach beim Einsteigen wischen und immer den günstigsten Preis zahlen. Die App ist der perfekte Begleiter im VVO-Raum, da sie immer den günstigsten Tarif für dich berechnet. Probiere es mal aus!"
 
             lowInput.contains("tag") || lowInput.contains("morgen") || lowInput.contains("abend") || lowInput.contains("nacht") ->
                 context.getString(de.vvo.glassapp.R.string.assistant_nice_day)

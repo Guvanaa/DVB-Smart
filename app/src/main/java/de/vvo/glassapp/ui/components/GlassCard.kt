@@ -7,15 +7,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
+import androidx.compose.foundation.clickable
+
 @Composable
 fun GlassCard(
     modifier: Modifier = Modifier,
     shape: RoundedCornerShape = RoundedCornerShape(24.dp),
     padding: androidx.compose.ui.unit.Dp? = null,
+    onClick: (() -> Unit)? = null,
     content: @Composable BoxScope.() -> Unit
 ) {
     Box(
-        modifier = modifier.glassEffect(shape = shape, padding = padding)
+        modifier = if (onClick != null) {
+            modifier.clickable(onClick = onClick).glassEffect(shape = shape, padding = padding)
+        } else {
+            modifier.glassEffect(shape = shape, padding = padding)
+        }
     ) {
         content()
     }
