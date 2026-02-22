@@ -2,10 +2,12 @@ package de.vvo.glassapp.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
-import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.expandVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -14,13 +16,10 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Send
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -41,137 +40,152 @@ fun AssistantScreen(navController: NavController) {
     val context = LocalContext.current
     val viewModel: TransitViewModel = viewModel(factory = TransitViewModel.Factory)
     var inputText by remember { mutableStateOf("") }
-    val messages = viewModel.assistantMessages
-    val isTyping = viewModel.isAssistantTyping
-    val welcomeMessage = stringResource(R.string.assistant_welcome)
-    val listState = rememberLazyListState()
-
-    LaunchedEffect(Unit) {
-        if (messages.isEmpty()) {
-            messages.add(ChatMessage(welcomeMessage, false))
-        }
-    }
-
-    LaunchedEffect(messages.size) {
-        if (messages.isNotEmpty()) {
-            listState.animateScrollToItem(messages.size - 1)
-        }
-    }
-
-    val action by remember { derivedStateOf { viewModel.assistantAction } }
-    LaunchedEffect(action) {
-        if (action == "navigate:map") {
-            kotlinx.coroutines.delay(1000)
-            viewModel.assistantAction = null
-            navController.navigate("map")
-        }
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-            .statusBarsPadding()
-            .navigationBarsPadding()
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = { navController.popBackStack() }) {
-                Icon(Icons.Default.ArrowBack, contentDescription = null, tint = Color.White)
-            }
-            Text(
-                text = stringResource(R.string.assistant_name),
-                fontSize = 24.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = Color.White
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(bottom = 16.dp)
-        ) {
-            items(messages) { message ->
-                AnimatedVisibility(
-                    visible = true,
-                    enter = fadeIn() + slideInVertically { it / 2 }
-                ) {
-                    ChatBubble(message)
-                }
-            }
-            if (isTyping) {
-                item {
-                    TypingIndicator()
-                }
-            }
-        }
-
-        // Quick Buttons
-        val quickActions = listOf(
-            "Wann fährt die 3?",
-            "Zeig mir die Karte",
-            "Favoriten",
-            "DVB Fakten",
-            "Tickets?"
+    val backgroundBrush = androidx.compose.ui.graphics.Brush.verticalGradient(
+        colors = listOf(
+            de.vvo.glassapp.ui.theme.BackgroundGradientStart,
+            de.vvo.glassapp.ui.theme.BackgroundGradientMiddle,
+            de.vvo.glassapp.ui.theme.BackgroundGradientEnd
         )
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.padding(bottom = 12.dp)
-        ) {
-            items(quickActions) { action ->
-                Button(
-                    onClick = {
-                        inputText = action
-                        viewModel.sendMessageToAssistant(action, context)
-                        inputText = ""
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.White.copy(alpha = 0.1f),
-                        contentColor = Color.White
-                    ),
-                    shape = RoundedCornerShape(12.dp),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
-                ) {
-                    Text(text = action, fontSize = 13.sp)
-                }
+    )
+
+    Box(modifier = Modifier.fillMaxSize().background(backgroundBrush)) {
+        val messages = viewModel.assistantMessages
+        val isTyping = viewModel.isAssistantTyping
+        val welcomeMessage = stringResource(R.string.assistant_welcome)
+        val listState = rememberLazyListState()
+        val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
+
+        LaunchedEffect(Unit) {
+            if (messages.isEmpty()) {
+                messages.add(ChatMessage(welcomeMessage, false))
             }
         }
 
-        // Input Area
-        GlassCard(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp)
+        LaunchedEffect(messages.size) {
+            if (messages.isNotEmpty()) {
+                listState.animateScrollToItem(messages.size - 1)
+            }
+        }
+
+        val action by remember { derivedStateOf { viewModel.assistantAction } }
+        LaunchedEffect(action) {
+            if (action == "navigate:map") {
+                kotlinx.coroutines.delay(1000)
+                viewModel.assistantAction = null
+                navController.navigate("map")
+            }
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+                .statusBarsPadding()
+                .navigationBarsPadding()
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = { navController.popBackStack() }) {
+                    Icon(Icons.Default.ArrowBack, contentDescription = null, tint = Color.White)
+                }
+                Text(
+                    text = stringResource(R.string.assistant_name),
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Black,
+                    color = Color.White,
+                    letterSpacing = (-1).sp
+                )
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(bottom = 16.dp)
             ) {
-                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
-                    if (inputText.isEmpty()) {
+                items(messages) { message ->
+                    AnimatedVisibility(
+                        visible = true,
+                        enter = fadeIn() + expandVertically()
+                    ) {
+                        ChatBubble(message)
+                    }
+                }
+                if (isTyping) {
+                    item {
+                        TypingIndicator()
+                    }
+                }
+            }
+
+            // Quick Buttons
+            val quickActions = listOf(
+                "Wann fährt die 3?",
+                "Öffne die Karte",
+                "Zeig Favoriten",
+                "Fakten über DVB",
+                "Preise & Tickets"
+            )
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.padding(bottom = 16.dp),
+                contentPadding = PaddingValues(horizontal = 4.dp)
+            ) {
+                items(quickActions) { action ->
+                    GlassCard(
+                        modifier = Modifier.clickable {
+                            haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                            viewModel.sendMessageToAssistant(action, context)
+                        },
+                        shape = RoundedCornerShape(16.dp),
+                        padding = 0.dp
+                    ) {
                         Text(
-                            text = stringResource(R.string.assistant_hint),
-                            color = Color.White.copy(alpha = 0.5f)
+                            text = action,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
                         )
                     }
-                    BasicTextField(
-                        value = inputText,
-                        onValueChange = { inputText = it },
-                        textStyle = TextStyle(color = Color.White, fontSize = 16.sp),
-                        modifier = Modifier.fillMaxWidth()
-                    )
                 }
-                IconButton(
-                    onClick = {
-                        if (inputText.isNotBlank()) {
-                            viewModel.sendMessageToAssistant(inputText, context)
-                            inputText = ""
-                        }
-                    }
+            }
+
+            // Input Area
+            GlassCard(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(28.dp),
+                padding = 4.dp
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
-                    Icon(Icons.Default.Send, contentDescription = null, tint = DvbYellow)
+                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                        if (inputText.isEmpty()) {
+                            Text(
+                                text = stringResource(R.string.assistant_hint),
+                                color = Color.White.copy(alpha = 0.5f)
+                            )
+                        }
+                        BasicTextField(
+                            value = inputText,
+                            onValueChange = { inputText = it },
+                            textStyle = TextStyle(color = Color.White, fontSize = 16.sp),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                    IconButton(
+                        onClick = {
+                            if (inputText.isNotBlank()) {
+                                viewModel.sendMessageToAssistant(inputText, context)
+                                inputText = ""
+                            }
+                        }
+                    ) {
+                        Icon(Icons.Default.Send, contentDescription = null, tint = DvbYellow)
+                    }
                 }
             }
         }
@@ -197,27 +211,28 @@ fun TypingIndicator() {
 @Composable
 fun ChatBubble(message: ChatMessage) {
     val alignment = if (message.isFromUser) Alignment.CenterEnd else Alignment.CenterStart
-    val textColor = Color.White
-    val bubbleColor = if (message.isFromUser) Color(0xFF007AFF) else Color.White.copy(alpha = 0.1f)
+    val bubbleColor = if (message.isFromUser) Color(0xFF007AFF).copy(alpha = 0.9f) else Color.White.copy(alpha = 0.15f)
 
-    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp), contentAlignment = alignment) {
-        Surface(
-            color = bubbleColor,
+    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp), contentAlignment = alignment) {
+        GlassCard(
+            modifier = Modifier.widthIn(max = 300.dp),
             shape = RoundedCornerShape(
-                topStart = 20.dp,
-                topEnd = 20.dp,
-                bottomStart = if (message.isFromUser) 20.dp else 4.dp,
-                bottomEnd = if (message.isFromUser) 4.dp else 20.dp
+                topStart = 22.dp,
+                topEnd = 22.dp,
+                bottomStart = if (message.isFromUser) 22.dp else 6.dp,
+                bottomEnd = if (message.isFromUser) 6.dp else 22.dp
             ),
-            modifier = Modifier.widthIn(max = 280.dp)
+            padding = 0.dp
         ) {
-            Text(
-                text = message.text,
-                color = textColor,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                fontSize = 16.sp,
-                lineHeight = 22.sp
-            )
+            Box(modifier = Modifier.background(bubbleColor).padding(horizontal = 18.dp, vertical = 12.dp)) {
+                Text(
+                    text = message.text,
+                    color = Color.White,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Medium,
+                    lineHeight = 24.sp
+                )
+            }
         }
     }
 }

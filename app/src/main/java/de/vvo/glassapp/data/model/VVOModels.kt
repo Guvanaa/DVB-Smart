@@ -2,6 +2,10 @@ package de.vvo.glassapp.data.model
 
 import com.google.gson.annotations.SerializedName
 
+data class Status(
+    @SerializedName("Code") val code: String
+)
+
 data class Stop(
     @SerializedName("Id") val id: String,
     @SerializedName("Name") val name: String,
@@ -9,16 +13,20 @@ data class Stop(
     @SerializedName("Lat") val lat: Double? = null,
     @SerializedName("Lon") val lon: Double? = null,
     @SerializedName("Latitude") val latitude: Double? = null,
-    @SerializedName("Longitude") val longitude: Double? = null,
-    @SerializedName("WGS84Lat") val wgs84Lat: Double? = null,
-    @SerializedName("WGS84Lon") val wgs84Lon: Double? = null
+    @SerializedName("Longitude") val longitude: Double? = null
 ) {
-    fun latitudeValue(): Double? = lat ?: latitude ?: wgs84Lat
-    fun longitudeValue(): Double? = lon ?: longitude ?: wgs84Lon
+    fun latitudeValue(): Double? = lat ?: latitude
+    fun longitudeValue(): Double? = lon ?: longitude
 }
 
 data class StopSearchResponse(
-    @SerializedName("Stops") val stops: List<Stop>?
+    @SerializedName("Stops") val stops: List<Stop>?,
+    @SerializedName("Status") val status: Status?
+)
+
+data class PointFinderResponse(
+    @SerializedName("Points") val points: List<String>?,
+    @SerializedName("Status") val status: Status?
 )
 
 data class Departure(
@@ -29,7 +37,6 @@ data class Departure(
     @SerializedName("RealTime") val realTime: String? = null,
     @SerializedName("ScheduledTime") val scheduledTime: String,
     @SerializedName("State") val state: String? = null,
-    @SerializedName("Type") val type: String? = null,
     @SerializedName("Mot") val mot: String? = null
 )
 
@@ -40,68 +47,85 @@ data class Platform(
 
 data class DepartureResponse(
     @SerializedName("Departures") val departures: List<Departure>?,
-    @SerializedName("Name") val name: String?
+    @SerializedName("Name") val name: String?,
+    @SerializedName("Status") val status: Status?
 )
 
 data class VehiclePin(
-    @SerializedName("Id") val id: String,
-    @SerializedName("Lat") val lat: Double? = null,
-    @SerializedName("Lon") val lon: Double? = null,
-    @SerializedName("Latitude") val latitude: Double? = null,
-    @SerializedName("Longitude") val longitude: Double? = null,
-    @SerializedName("Line") val line: String,
-    @SerializedName("Dir") val direction: String,
-    @SerializedName("Type") val type: String,
-    @SerializedName("Punctuality") val punctuality: Int? = null // Delay in minutes
+    val id: String,
+    val lat: Double,
+    val lon: Double,
+    val line: String,
+    val direction: String,
+    val type: String,
+    val punctuality: Int? = null
 ) {
-    fun latitudeValue(): Double = lat ?: latitude ?: 0.0
-    fun longitudeValue(): Double = lon ?: longitude ?: 0.0
+    fun latitudeValue(): Double = lat
+    fun longitudeValue(): Double = lon
 }
 
 data class MapPinsResponse(
-    @SerializedName("Pins") val pins: List<VehiclePin>?
+    @SerializedName("Pins") val pins: List<String>?,
+    @SerializedName("Status") val status: Status?
 )
 
 data class MapStopsResponse(
-    @SerializedName("Stops") val stops: List<Stop>?
+    @SerializedName("Stops") val stops: List<Stop>?,
+    @SerializedName("Status") val status: Status?
 )
 
 data class StopPoint(
     @SerializedName("Name") val name: String,
+    @SerializedName("Place") val place: String? = null,
     @SerializedName("Lat") val lat: Double? = null,
     @SerializedName("Lon") val lon: Double? = null,
-    @SerializedName("Latitude") val latitude: Double? = null,
-    @SerializedName("Longitude") val longitude: Double? = null,
     @SerializedName("Time") val time: String? = null,
+    @SerializedName("RealTime") val realTime: String? = null,
     @SerializedName("Delay") val delay: Int? = null
 ) {
-    fun latitudeValue(): Double = lat ?: latitude ?: 0.0
-    fun longitudeValue(): Double = lon ?: longitude ?: 0.0
+    fun latitudeValue(): Double = lat ?: 0.0
+    fun longitudeValue(): Double = lon ?: 0.0
 }
 
 data class RouteResponse(
-    @SerializedName("Stops") val stops: List<StopPoint>?
+    @SerializedName("Stops") val stops: List<StopPoint>?,
+    @SerializedName("Status") val status: Status?
 )
 
 data class TripResponse(
-    @SerializedName("Trips") val trips: List<Trip>?
+    @SerializedName("Routes") val routes: List<Route>?,
+    @SerializedName("Status") val status: Status?
 )
 
-data class Trip(
+data class Route(
     @SerializedName("Duration") val duration: Int,
     @SerializedName("Interchanges") val interchanges: Int,
-    @SerializedName("DepartureTime") val departureTime: String,
-    @SerializedName("ArrivalTime") val arrivalTime: String,
-    @SerializedName("Sections") val sections: List<Section>
+    @SerializedName("DepartureTime") val departureTime: String?,
+    @SerializedName("ArrivalTime") val arrivalTime: String?,
+    @SerializedName("MotChain") val motChain: List<MotChainItem>?,
+    @SerializedName("MapData") val mapData: List<String>?
+)
+
+data class MotChainItem(
+    @SerializedName("Name") val name: String?,
+    @SerializedName("Type") val type: String?,
+    @SerializedName("Direction") val direction: String?
+)
+
+// Legacy compatibility for TripItem
+data class Trip(
+    val duration: Int,
+    val interchanges: Int,
+    val departureTime: String,
+    val arrivalTime: String,
+    val sections: List<Section>
 )
 
 data class Section(
-    @SerializedName("Type") val type: String,
-    @SerializedName("Line") val line: String? = null,
-    @SerializedName("Direction") val direction: String? = null,
-    @SerializedName("Duration") val duration: Int? = null,
-    @SerializedName("Mode") val mode: String? = null,
-    @SerializedName("Mot") val mot: String? = null
+    val type: String,
+    val line: String? = null,
+    val direction: String? = null,
+    val duration: Int? = null
 )
 
 data class ChatMessage(val text: String, val isFromUser: Boolean)

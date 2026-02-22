@@ -317,7 +317,7 @@ class TransitViewModel(
         _selectedVehicleRoute.value = emptyList()
         viewModelScope.launch {
             try {
-                if (stop.lat == null) {
+                if (stop.latitudeValue() == null) {
                     val search = repository.searchStops(stop.id)
                     search.find { it.id == stop.id }?.let { _selectedStop.value = it }
                 }

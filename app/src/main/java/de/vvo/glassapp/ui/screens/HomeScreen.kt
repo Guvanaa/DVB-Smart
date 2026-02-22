@@ -125,6 +125,14 @@ fun HomeScreen(navController: NavController) {
                         mapInstance = map
                         val styleUrl = "https://tiles.openfreemap.org/styles/bright"
                         map.setStyle(styleUrl)
+
+                        // Disable all gestures
+                        map.uiSettings.isScrollGesturesEnabled = false
+                        map.uiSettings.isZoomGesturesEnabled = false
+                        map.uiSettings.isTiltGesturesEnabled = false
+                        map.uiSettings.isRotateGesturesEnabled = false
+                        map.uiSettings.isDoubleTapGesturesEnabled = false
+
                         val target = userLocation ?: com.mapbox.mapboxsdk.geometry.LatLng(51.0509, 13.7373)
                         map.cameraPosition = com.mapbox.mapboxsdk.camera.CameraPosition.Builder()
                             .target(target)
@@ -140,7 +148,7 @@ fun HomeScreen(navController: NavController) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.3f))
+                .background(Color.Black.copy(alpha = 0.45f))
         )
 
         // UI Overlay
@@ -723,7 +731,7 @@ fun FavoriteItem(
                     else -> Icons.Filled.Star
                 }
                 Surface(
-                    color = Color.White.copy(alpha = 0.15f),
+                    color = Color.White.copy(alpha = 0.25f),
                     shape = CircleShape,
                     modifier = Modifier.size(40.dp)
                 ) {
