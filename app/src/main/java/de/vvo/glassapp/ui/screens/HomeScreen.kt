@@ -19,8 +19,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Place
@@ -53,7 +52,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import de.vvo.glassapp.data.model.Stop
 import com.mapbox.mapboxsdk.camera.CameraPosition
-import de.vvo.glassapp.ui.components.GlassCard
+import de.vvo.glassapp.ui.components.*
 import de.vvo.glassapp.ui.theme.DvbYellow
 import de.vvo.glassapp.ui.viewmodel.TransitViewModel
 
@@ -217,8 +216,8 @@ fun HomeScreen(navController: NavController) {
                             navController.navigate("assistant")
                         },
                         modifier = Modifier.graphicsLayer(
-                            scaleX = scale * 1.15f,
-                            scaleY = scale * 1.15f,
+                        scaleX = scale * 1.25f,
+                        scaleY = scale * 1.25f,
                             translationY = offsetY
                         )
                     ) {
@@ -781,13 +780,24 @@ fun TripItem(trip: de.vvo.glassapp.data.model.Trip, navController: NavController
                                         navController.navigate("map")
                                     }
                             ) {
-                                Text(
-                                    text = section.line!!,
-                                    color = Color.Black,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 10.sp,
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
-                                )
+                                ) {
+                                    val icon = when {
+                                        section.type.lowercase().contains("bus") -> Icons.Default.DirectionsBus
+                                        section.type.lowercase().contains("tram") -> Icons.Default.Tram
+                                        else -> Icons.Default.DirectionsRailway
+                                    }
+                                    Icon(icon, contentDescription = null, tint = Color.Black, modifier = Modifier.size(10.dp))
+                                    Spacer(modifier = Modifier.width(2.dp))
+                                    Text(
+                                        text = section.line!!,
+                                        color = Color.Black,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 10.sp
+                                    )
+                                }
                             }
                         } else if (section.type == "Footway" || section.type == "Walking") {
                              Icon(

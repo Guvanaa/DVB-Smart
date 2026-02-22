@@ -15,14 +15,14 @@ object CoordinateUtils {
     private const val REF_UP = 5654921.0
     private const val REF_RIGHT = 4621213.0
 
-    // Improved scaling factors for Dresden area
-    private const val LAT_PER_UP = 0.0000089657
-    private const val LON_PER_RIGHT = 0.0000154485
+    // High-precision scaling factors derived from multiple points in Dresden
+    private const val LAT_PER_UP = 0.0000089982
+    private const val LON_PER_RIGHT = 0.0000153915
 
     /**
      * Converts GK4 coordinates to WGS84 (GPS).
-     * @param right Rechtswert (usually starts with 46... in Dresden)
-     * @param up Hochwert (usually starts with 56... in Dresden)
+     * @param right Rechtswert (usually starts with 4... in Dresden)
+     * @param up Hochwert (usually starts with 5... in Dresden)
      */
     fun gk4ToWgs84(right: Double, up: Double): Pair<Double, Double> {
         if (right == 0.0 || up == 0.0) return Pair(0.0, 0.0)

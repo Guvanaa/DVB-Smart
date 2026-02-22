@@ -37,7 +37,8 @@ data class Departure(
     @SerializedName("RealTime") val realTime: String? = null,
     @SerializedName("ScheduledTime") val scheduledTime: String,
     @SerializedName("State") val state: String? = null,
-    @SerializedName("Mot") val mot: String? = null
+    @SerializedName("Mot") val mot: String? = null,
+    val delay: Int? = null
 )
 
 data class Platform(

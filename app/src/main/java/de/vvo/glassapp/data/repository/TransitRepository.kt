@@ -4,6 +4,7 @@ import de.vvo.glassapp.data.api.PhotonApi
 import de.vvo.glassapp.data.api.VvoApi
 import de.vvo.glassapp.data.model.*
 import de.vvo.glassapp.util.CoordinateUtils
+import de.vvo.glassapp.util.DateTimeUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -46,7 +47,14 @@ class TransitRepository(
                 "format" to "json"
             )
             val response = vvoApi.getDepartures(body)
-            response.departures ?: emptyList()
+            response.departures?.map { dep ->
+                val delay = DateTimeUtils.calculateDelay(dep.scheduledTime, dep.realTime)
+                dep.copy(
+                    scheduledTime = DateTimeUtils.formatTime(dep.scheduledTime),
+                    realTime = dep.realTime?.let { DateTimeUtils.formatTime(it) },
+                    delay = delay
+                )
+            } ?: emptyList()
         } catch (e: Exception) {
             android.util.Log.e("TransitRepository", "Departures failed", e)
             emptyList()
@@ -94,7 +102,7 @@ class TransitRepository(
                 "swlng" to swR.toLong().toString(),
                 "nelat" to neU.toLong().toString(),
                 "nelng" to neR.toLong().toString(),
-                "pintypes" to "Stop,Vehicle",
+                "pintypes" to "Vehicle", // Request only vehicles for this list
                 "showtrips" to true,
                 "format" to "json"
             )
@@ -107,15 +115,13 @@ class TransitRepository(
                     val right = parts[5].toDoubleOrNull() ?: 0.0
                     val (lat, lon) = CoordinateUtils.gk4ToWgs84(right, up)
 
-                    if (id.startsWith("tr:")) {
+                    if (id.startsWith("tr:") || parts.size > 8) {
                         // Trip/Vehicle
                         val line = parts[3]
                         val direction = parts[2]
-                        val delay = if (parts.size > 6) parts[6].toIntOrNull() else 0
+                        // Punctuality is usually at index 6 or later in the string
+                        val delay = if (parts.size > 6) parts[6].toIntOrNull() else null
                         VehiclePin(id, lat, lon, line, direction, "Vehicle", punctuality = delay)
-                    } else if (id.length >= 8) {
-                        // Likely a stop
-                        null // We handle stops in getStopsInArea
                     } else null
                 } else null
             } ?: emptyList()
@@ -132,7 +138,7 @@ class TransitRepository(
                 "destination" to destination,
                 "format" to "json",
                 "standardSettings" to mapOf(
-                    "mot" to listOf("Tram", "CityBus", "SuburbanRailway", "Train", "Cableway", "Ferry", "Footway")
+                    "mot" to listOf("Tram", "CityBus", "SuburbanRailway", "Train", "Cableway", "Ferry")
                 )
             )
             if (time != null) {
@@ -145,8 +151,8 @@ class TransitRepository(
                 Trip(
                     duration = route.duration,
                     interchanges = route.interchanges,
-                    departureTime = route.departureTime ?: "",
-                    arrivalTime = route.arrivalTime ?: "",
+                    departureTime = DateTimeUtils.formatTime(route.departureTime),
+                    arrivalTime = DateTimeUtils.formatTime(route.arrivalTime),
                     sections = route.motChain?.map { item ->
                         Section(
                             type = item.type ?: "Walking",

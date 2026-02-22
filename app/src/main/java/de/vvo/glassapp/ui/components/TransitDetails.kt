@@ -25,7 +25,56 @@ import androidx.compose.ui.unit.sp
 import de.vvo.glassapp.data.model.Departure
 import de.vvo.glassapp.data.model.Stop
 import de.vvo.glassapp.data.model.StopPoint
+import de.vvo.glassapp.data.model.VehiclePin
 import de.vvo.glassapp.ui.theme.DvbYellow
+
+@Composable
+fun VehicleListSheet(
+    pins: List<VehiclePin>,
+    onVehicleClick: (VehiclePin) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    GlassCard(
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(max = 300.dp),
+        shape = RoundedCornerShape(24.dp)
+    ) {
+        LazyColumn(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            itemsIndexed(pins) { _, pin ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onVehicleClick(pin) },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val statusColor = when {
+                        (pin.punctuality ?: 0) < 0 -> Color(0xFF4CAF50)
+                        (pin.punctuality ?: 0) == 0 -> Color(0xFFFFCC00)
+                        else -> Color(0xFFF44336)
+                    }
+
+                    Box(
+                        modifier = Modifier.background(statusColor, RoundedCornerShape(8.dp))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(pin.line, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Column {
+                        Text(pin.direction, color = Color.White, fontWeight = FontWeight.Medium, fontSize = 16.sp)
+                        val delay = pin.punctuality ?: 0
+                        val delayText = if (delay > 0) "+$delay min" else if (delay < 0) "$delay min" else "pünktlich"
+                        Text(delayText, color = if (delay > 0) Color(0xFFF44336) else if (delay < 0) Color(0xFF4CAF50) else Color.White.copy(alpha = 0.6f), fontSize = 12.sp)
+                    }
+                }
+            }
+        }
+    }
+}
 
 @Composable
 fun StopDetailSheet(
@@ -68,10 +117,22 @@ fun StopDetailSheet(
                         Spacer(modifier = Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(dep.direction, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Medium, fontSize = 15.sp, maxLines = 1)
-                            Text(dep.realTime ?: dep.scheduledTime, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), fontSize = 12.sp)
-                        }
-                        if (dep.realTime != null && dep.realTime != dep.scheduledTime) {
-                            Text("Realtime", color = Color.Red, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(dep.realTime ?: dep.scheduledTime, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                if (dep.delay != null && dep.delay != 0) {
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    val delayText = if (dep.delay > 0) "+${dep.delay}" else dep.delay.toString()
+                                    Text(
+                                        text = "$delayText min",
+                                        color = if (dep.delay > 0) Color(0xFFF44336) else Color(0xFF4CAF50),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.ExtraBold
+                                    )
+                                } else if (dep.realTime != null) {
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("pünktlich", color = Color(0xFF4CAF50), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
                         }
                     }
                 }
