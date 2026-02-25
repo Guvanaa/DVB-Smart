@@ -35,11 +35,17 @@ import com.mapbox.mapboxsdk.plugins.annotation.SymbolOptions
 import de.vvo.glassapp.R
 import de.vvo.glassapp.data.model.VehiclePin
 import de.vvo.glassapp.ui.components.GlassCard
+import de.vvo.glassapp.ui.components.LocalGlassBackdrop
 import de.vvo.glassapp.ui.components.RouteDetailSheet
 import de.vvo.glassapp.ui.components.StopDetailSheet
 import de.vvo.glassapp.ui.components.VehicleListSheet
 import de.vvo.glassapp.ui.theme.DvbYellow
 import de.vvo.glassapp.ui.viewmodel.TransitViewModel
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalGraphicsContext
+import com.kyant.backdrop.backdrops.rememberLayerBackdrop
+import com.kyant.backdrop.backdrops.layerBackdrop
 import kotlinx.coroutines.delay
 
 import androidx.compose.foundation.lazy.LazyColumn
@@ -330,6 +336,11 @@ fun MapScreen(
         }
     }
 
+    val graphicsContext = LocalGraphicsContext.current
+    val graphicsLayer = remember { graphicsContext.createGraphicsLayer() }
+    DisposableEffect(graphicsLayer) { onDispose { graphicsContext.releaseGraphicsLayer(graphicsLayer) } }
+    val backdrop = rememberLayerBackdrop(graphicsLayer)
+
     Box(modifier = Modifier.fillMaxSize()) {
         val mapView = remember { MapView(context) }
 
@@ -430,6 +441,16 @@ fun MapScreen(
             },
             modifier = Modifier.fillMaxSize()
         )
+
+        // Backdrop-Quelle über der Karte
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .layerBackdrop(backdrop)
+                .background(Color(0xFF0A0F1E).copy(alpha = 0.45f))
+        )
+
+        CompositionLocalProvider(LocalGlassBackdrop provides backdrop) {
 
         IconButton(
             onClick = { navController.popBackStack() },
@@ -547,5 +568,6 @@ fun MapScreen(
                 }
             }
         }
+        } // CompositionLocalProvider
     }
 }

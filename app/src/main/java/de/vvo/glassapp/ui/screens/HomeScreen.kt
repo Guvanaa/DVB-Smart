@@ -55,6 +55,10 @@ import com.mapbox.mapboxsdk.camera.CameraPosition
 import de.vvo.glassapp.ui.components.*
 import de.vvo.glassapp.ui.theme.DvbYellow
 import de.vvo.glassapp.ui.viewmodel.TransitViewModel
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalGraphicsContext
+import com.kyant.backdrop.backdrops.rememberLayerBackdrop
+import com.kyant.backdrop.backdrops.layerBackdrop
 
 @OptIn(ExperimentalMaterial3Api::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
@@ -96,6 +100,11 @@ fun HomeScreen(navController: NavController) {
             viewModel.searchStops("")
         }
     }
+
+    val graphicsContext = LocalGraphicsContext.current
+    val graphicsLayer = remember { graphicsContext.createGraphicsLayer() }
+    DisposableEffect(graphicsLayer) { onDispose { graphicsContext.releaseGraphicsLayer(graphicsLayer) } }
+    val backdrop = rememberLayerBackdrop(graphicsLayer)
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Map Background
@@ -143,15 +152,16 @@ fun HomeScreen(navController: NavController) {
             modifier = Modifier.fillMaxSize()
         )
 
-        // Semi-transparent overlay to improve UI contrast
-        val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+        // Backdrop-Quelle: dunkle Compose-Schicht über der Karte (wird von Glass-Karten geblurrt)
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(if (isDark) Color.Black.copy(alpha = 0.45f) else Color.White.copy(alpha = 0.25f))
+                .layerBackdrop(backdrop)
+                .background(Color(0xFF0A0F1E).copy(alpha = 0.55f))
         )
 
         // UI Overlay
+        CompositionLocalProvider(LocalGlassBackdrop provides backdrop) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -168,14 +178,14 @@ fun HomeScreen(navController: NavController) {
                         text = "DVB-Smart",
                         fontSize = 42.sp,
                         fontWeight = FontWeight.Black,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = Color.White,
                         letterSpacing = (-1.5).sp
                     )
                     Text(
                         text = "Dein Weg durch Dresden.",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        color = Color.White.copy(alpha = 0.7f)
                     )
                 }
 
@@ -190,7 +200,7 @@ fun HomeScreen(navController: NavController) {
                         text = stringResource(R.string.search_hint),
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White.copy(alpha = 0.9f)
+                        color = Color.White
                     )
                     val infiniteTransition = rememberInfiniteTransition()
                     val scale by infiniteTransition.animateFloat(
@@ -468,6 +478,7 @@ fun HomeScreen(navController: NavController) {
                 Spacer(modifier = Modifier.height(48.dp))
             }
         }
+        } // CompositionLocalProvider
     }
 
     // Time Settings Sheet

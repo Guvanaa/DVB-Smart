@@ -32,23 +32,39 @@ import androidx.navigation.NavController
 import de.vvo.glassapp.R
 import de.vvo.glassapp.data.model.ChatMessage
 import de.vvo.glassapp.ui.components.GlassCard
+import de.vvo.glassapp.ui.components.LocalGlassBackdrop
 import de.vvo.glassapp.ui.theme.DvbYellow
 import de.vvo.glassapp.ui.viewmodel.TransitViewModel
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalGraphicsContext
+import com.kyant.backdrop.backdrops.rememberLayerBackdrop
+import com.kyant.backdrop.backdrops.layerBackdrop
 
 @Composable
 fun AssistantScreen(navController: NavController) {
     val context = LocalContext.current
     val viewModel: TransitViewModel = viewModel(factory = TransitViewModel.Factory)
     var inputText by remember { mutableStateOf("") }
-    val backgroundBrush = androidx.compose.ui.graphics.Brush.verticalGradient(
+    val graphicsContext = LocalGraphicsContext.current
+    val graphicsLayer = remember { graphicsContext.createGraphicsLayer() }
+    DisposableEffect(graphicsLayer) { onDispose { graphicsContext.releaseGraphicsLayer(graphicsLayer) } }
+    val backdrop = rememberLayerBackdrop(graphicsLayer)
+    val gradientBrush = Brush.verticalGradient(
         colors = listOf(
-            de.vvo.glassapp.ui.theme.BackgroundGradientStart,
-            de.vvo.glassapp.ui.theme.BackgroundGradientMiddle,
-            de.vvo.glassapp.ui.theme.BackgroundGradientEnd
+            Color(0xFF0F172A),
+            Color(0xFF1E1B4B),
+            Color(0xFF312E81)
         )
     )
 
-    Box(modifier = Modifier.fillMaxSize().background(backgroundBrush)) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Gradient-Hintergrund als Backdrop-Quelle (Glass-Karten blurren diesen)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .layerBackdrop(backdrop)
+                .background(gradientBrush)
+        )
         val messages = viewModel.assistantMessages
         val isTyping = viewModel.isAssistantTyping
         val welcomeMessage = stringResource(R.string.assistant_welcome)
@@ -76,6 +92,7 @@ fun AssistantScreen(navController: NavController) {
             }
         }
 
+        CompositionLocalProvider(LocalGlassBackdrop provides backdrop) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -196,6 +213,7 @@ fun AssistantScreen(navController: NavController) {
                 }
             }
         }
+        } // CompositionLocalProvider
     }
 }
 
