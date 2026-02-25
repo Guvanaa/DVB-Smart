@@ -35,7 +35,8 @@ fun Modifier.glassEffect(
                     blur(26f)
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         vibrancy()
-                        lens(refractionHeight = 6f, refractionAmount = 12f)
+                        lens(refractionHeight = 50f, refractionAmount = 100f)
+                             //So tief geht Brechung ins Element //Stärke der Brechung
                     }
                 },
                 onDrawSurface = {

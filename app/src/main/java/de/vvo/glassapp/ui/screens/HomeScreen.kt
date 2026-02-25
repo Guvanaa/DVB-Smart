@@ -189,7 +189,19 @@ fun HomeScreen(navController: NavController) {
                     )
                 }
 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // PROTO: temporärer Button zum Glass-Prototypen
+                Button(
+                    onClick = { navController.navigate("proto") },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.15f)),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Text("🧪 Glass Prototyp", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
