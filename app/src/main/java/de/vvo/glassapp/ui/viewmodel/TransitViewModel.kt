@@ -11,7 +11,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import de.vvo.glassapp.util.ServiceLocator
-import com.mapbox.mapboxsdk.geometry.LatLng
+import org.maplibre.android.geometry.LatLng
 import de.vvo.glassapp.data.model.*
 import de.vvo.glassapp.data.repository.FavoritesManager
 import de.vvo.glassapp.data.repository.TransitRepository

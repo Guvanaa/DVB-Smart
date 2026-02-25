@@ -32,10 +32,10 @@ fun Modifier.glassEffect(
                 backdrop = backdrop,
                 shape = { shape },
                 effects = {
-                    blur(26f)
+                    blur(10f)
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         vibrancy()
-                        lens(refractionHeight = 50f, refractionAmount = 100f)
+                        lens(refractionHeight = 50f, refractionAmount = 200f)
                              //So tief geht Brechung ins Element //Stärke der Brechung
                     }
                 },

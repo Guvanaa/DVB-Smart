@@ -51,8 +51,15 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import de.vvo.glassapp.data.model.Stop
-import com.mapbox.mapboxsdk.camera.CameraPosition
 import de.vvo.glassapp.ui.components.*
+import org.maplibre.compose.camera.CameraPosition as MapCameraPosition
+import org.maplibre.compose.camera.rememberCameraState
+import org.maplibre.compose.map.GestureOptions
+import org.maplibre.compose.map.MapOptions
+import org.maplibre.compose.map.MaplibreMap
+import org.maplibre.compose.map.RenderOptions
+import org.maplibre.compose.style.BaseStyle
+import org.maplibre.spatialk.geojson.Position
 import de.vvo.glassapp.ui.theme.DvbYellow
 import de.vvo.glassapp.ui.viewmodel.TransitViewModel
 import androidx.compose.runtime.CompositionLocalProvider
@@ -106,58 +113,27 @@ fun HomeScreen(navController: NavController) {
     DisposableEffect(graphicsLayer) { onDispose { graphicsContext.releaseGraphicsLayer(graphicsLayer) } }
     val backdrop = rememberLayerBackdrop(graphicsLayer)
 
+    val mapCameraState = rememberCameraState(
+        firstPosition = MapCameraPosition(target = Position(13.7373, 51.0509), zoom = 14.0)
+    )
+    LaunchedEffect(userLocation) {
+        userLocation?.let { loc ->
+            mapCameraState.animateTo(MapCameraPosition(target = Position(loc.longitude, loc.latitude), zoom = 14.0))
+        }
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
-        // Map Background
-        val mapView = remember { com.mapbox.mapboxsdk.maps.MapView(context) }
-        androidx.compose.runtime.DisposableEffect(mapView) {
-            mapView.onCreate(null)
-            mapView.onStart()
-            mapView.onResume()
-            onDispose {
-                mapView.onPause()
-                mapView.onStop()
-                mapView.onDestroy()
-            }
-        }
-        var mapInstance by remember { mutableStateOf<com.mapbox.mapboxsdk.maps.MapboxMap?>(null) }
-        LaunchedEffect(userLocation) {
-            userLocation?.let { loc ->
-                mapInstance?.animateCamera(com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLng(loc))
-            }
-        }
-
-        androidx.compose.ui.viewinterop.AndroidView(
-            factory = {
-                mapView.apply {
-                    getMapAsync { map ->
-                        mapInstance = map
-                        val styleUrl = "https://tiles.openfreemap.org/styles/bright"
-                        map.setStyle(styleUrl)
-
-                        // Disable all gestures
-                        map.uiSettings.isScrollGesturesEnabled = false
-                        map.uiSettings.isZoomGesturesEnabled = false
-                        map.uiSettings.isTiltGesturesEnabled = false
-                        map.uiSettings.isRotateGesturesEnabled = false
-                        map.uiSettings.isDoubleTapGesturesEnabled = false
-
-                        val target = userLocation ?: com.mapbox.mapboxsdk.geometry.LatLng(51.0509, 13.7373)
-                        map.cameraPosition = com.mapbox.mapboxsdk.camera.CameraPosition.Builder()
-                            .target(target)
-                            .zoom(14.0)
-                            .build()
-                    }
-                }
-            },
-            modifier = Modifier.fillMaxSize()
-        )
-
-        // Backdrop-Quelle: dunkle Compose-Schicht über der Karte (wird von Glass-Karten geblurrt)
-        Box(
+        // Map as real backdrop source – TextureView mode lets GraphicsLayer capture it
+        MaplibreMap(
             modifier = Modifier
                 .fillMaxSize()
-                .layerBackdrop(backdrop)
-                .background(Color(0xFF0A0F1E).copy(alpha = 0.55f))
+                .layerBackdrop(backdrop),
+            baseStyle = BaseStyle.Uri("https://tiles.openfreemap.org/styles/bright"),
+            cameraState = mapCameraState,
+            options = MapOptions(
+                renderOptions = RenderOptions(renderMode = RenderOptions.RenderMode.TextureView),
+                gestureOptions = GestureOptions.AllDisabled
+            )
         )
 
         // UI Overlay

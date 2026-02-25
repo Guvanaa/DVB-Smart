@@ -1,7 +1,7 @@
 package de.vvo.glassapp.ui.screens
 
 import android.Manifest
-import android.graphics.Color as AndroidColor
+import android.annotation.SuppressLint
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -20,36 +20,43 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.mapbox.mapboxsdk.Mapbox
-import com.mapbox.mapboxsdk.camera.CameraPosition
-import com.mapbox.mapboxsdk.geometry.LatLng
-import com.mapbox.mapboxsdk.maps.MapView
-import com.mapbox.mapboxsdk.maps.Style
-import com.mapbox.mapboxsdk.plugins.annotation.LineManager
-import com.mapbox.mapboxsdk.plugins.annotation.LineOptions
-import com.mapbox.mapboxsdk.plugins.annotation.SymbolManager
-import com.mapbox.mapboxsdk.plugins.annotation.SymbolOptions
 import de.vvo.glassapp.R
 import de.vvo.glassapp.data.model.VehiclePin
 import de.vvo.glassapp.ui.components.GlassCard
 import de.vvo.glassapp.ui.components.LocalGlassBackdrop
 import de.vvo.glassapp.ui.components.RouteDetailSheet
 import de.vvo.glassapp.ui.components.StopDetailSheet
-import de.vvo.glassapp.ui.components.VehicleListSheet
 import de.vvo.glassapp.ui.theme.DvbYellow
 import de.vvo.glassapp.ui.viewmodel.TransitViewModel
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalGraphicsContext
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import com.kyant.backdrop.backdrops.layerBackdrop
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonPrimitive
 
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+
+import org.maplibre.compose.camera.CameraPosition as MapCameraPosition
+import org.maplibre.compose.camera.rememberCameraState
+import org.maplibre.compose.expressions.dsl.*
+import org.maplibre.compose.layers.CircleLayer
+import org.maplibre.compose.layers.LineLayer
+import org.maplibre.compose.layers.SymbolLayer
+import org.maplibre.compose.map.MapOptions
+import org.maplibre.compose.map.MaplibreMap
+import org.maplibre.compose.map.RenderOptions
+import org.maplibre.compose.sources.GeoJsonData
+import org.maplibre.compose.sources.rememberGeoJsonSource
+import org.maplibre.compose.style.BaseStyle
+import org.maplibre.compose.util.ClickResult
+import org.maplibre.spatialk.geojson.BoundingBox
+import org.maplibre.spatialk.geojson.Position
 
 @Composable
 fun VehicleListSheet(
@@ -99,6 +106,7 @@ fun VehicleListSheet(
     }
 }
 
+@SuppressLint("MissingPermission")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MapScreen(
@@ -109,6 +117,7 @@ fun MapScreen(
 ) {
     val context = LocalContext.current
     val viewModel: TransitViewModel = viewModel(factory = TransitViewModel.Factory)
+    val coroutineScope = rememberCoroutineScope()
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -119,8 +128,6 @@ fun MapScreen(
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.ACCESS_COARSE_LOCATION
         ))
-        // Try to get real location – only accept coordinates within Germany to avoid
-        // emulator default location (Shoreline Lake, California) being used
         fun isInGermany(lat: Double, lon: Double) = lat in 47.0..56.0 && lon in 5.0..16.0
         try {
             val locationManager = context.getSystemService(android.content.Context.LOCATION_SERVICE) as android.location.LocationManager
@@ -137,12 +144,6 @@ fun MapScreen(
         }
     }
 
-    var mapInstance by remember { mutableStateOf<com.mapbox.mapboxsdk.maps.MapboxMap?>(null) }
-    var vehicleManager by remember { mutableStateOf<SymbolManager?>(null) }
-    var stopManager by remember { mutableStateOf<SymbolManager?>(null) }
-    var poiManager by remember { mutableStateOf<SymbolManager?>(null) }
-    var lineManager by remember { mutableStateOf<LineManager?>(null) }
-
     val pins by viewModel.mapPins.collectAsState()
     val stops by viewModel.mapStops.collectAsState()
     val departures by viewModel.departures.collectAsState()
@@ -153,11 +154,25 @@ fun MapScreen(
     val currentTripRoute by viewModel.currentTripRoute.collectAsState()
     val selectedTrip by viewModel.selectedTrip.collectAsState()
 
+    // Camera state – initial position: given lat/lon, user location, or Dresden center
+    val initialTarget = when {
+        lat != null && lon != null -> Position(lon, lat)
+        userLocationState != null -> Position(userLocationState!!.longitude, userLocationState!!.latitude)
+        else -> Position(13.7373, 51.0509)
+    }
+    val initialZoom = if (lat != null || userLocationState != null) 15.0 else 13.0
+    val mapCameraState = rememberCameraState(
+        firstPosition = MapCameraPosition(target = initialTarget, zoom = initialZoom)
+    )
+
     var hasInitialCentered by remember { mutableStateOf(false) }
     LaunchedEffect(userLocationState) {
         if (!hasInitialCentered && userLocationState != null && stopId == null && lat == null) {
-            mapInstance?.animateCamera(
-                com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLngZoom(userLocationState!!, 15.0)
+            mapCameraState.animateTo(
+                MapCameraPosition(
+                    target = Position(userLocationState!!.longitude, userLocationState!!.latitude),
+                    zoom = 15.0
+                )
             )
             hasInitialCentered = true
         }
@@ -174,166 +189,35 @@ fun MapScreen(
             val sLat = stop.latitudeValue()
             val sLon = stop.longitudeValue()
             if (sLat != null && sLon != null) {
-                mapInstance?.animateCamera(
-                    com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLngZoom(
-                        LatLng(sLat, sLon), 15.0
-                    )
+                mapCameraState.animateTo(
+                    MapCameraPosition(target = Position(sLon, sLat), zoom = 15.0)
                 )
             }
         }
     }
 
+    // Fit camera to trip route bounding box when route is loaded
+    LaunchedEffect(currentTripRoute) {
+        if (currentTripRoute.size > 1) {
+            val minLat = currentTripRoute.minOf { it.latitude }
+            val maxLat = currentTripRoute.maxOf { it.latitude }
+            val minLon = currentTripRoute.minOf { it.longitude }
+            val maxLon = currentTripRoute.maxOf { it.longitude }
+            mapCameraState.animateTo(BoundingBox(minLon, minLat, maxLon, maxLat))
+        }
+    }
+
+    // Periodic map data refresh based on current camera position
     LaunchedEffect(Unit) {
-        try {
-            Mapbox.getInstance(context)
-        } catch (e: Exception) { }
-    }
-
-    // Refresh map data periodically based on current viewport
-    LaunchedEffect(mapInstance) {
-        while(true) {
-            mapInstance?.let { map ->
-                val bounds = map.projection.visibleRegion.latLngBounds
-                viewModel.loadMapData(bounds.getLatSouth(), bounds.getLonWest(), bounds.getLatNorth(), bounds.getLonEast())
-            } ?: run {
-                // Fallback to initial Dresden center if map not ready
-                viewModel.loadMapData(51.0, 13.6, 51.1, 13.9)
-            }
+        while (true) {
+            val pos = mapCameraState.position.target
+            viewModel.loadMapData(
+                pos.latitude - 0.05,
+                pos.longitude - 0.1,
+                pos.latitude + 0.05,
+                pos.longitude + 0.1
+            )
             delay(10000)
-        }
-    }
-
-    // Update vehicle symbols
-    LaunchedEffect(pins, vehicleManager) {
-        val manager = vehicleManager ?: return@LaunchedEffect
-        val map = mapInstance ?: return@LaunchedEffect
-        map.getStyle { style ->
-            try {
-                manager.deleteAll()
-                pins.forEach { pin ->
-                    val statusColor = when {
-                        (pin.punctuality ?: 0) < 0 -> "#4CAF50"
-                        (pin.punctuality ?: 0) == 0 -> "#FFCC00"
-                        else -> "#F44336"
-                    }
-
-                    val imageId = "icon_${pin.line}_${statusColor}"
-                    if (style.getImage(imageId) == null) {
-                        val size = 70
-                        val b = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888)
-                        val c = android.graphics.Canvas(b)
-                        val p = android.graphics.Paint()
-                        p.isAntiAlias = true
-                        p.color = android.graphics.Color.parseColor(statusColor)
-                        c.drawRoundRect(0f, 0f, size.toFloat(), size.toFloat(), 15f, 15f, p)
-
-                        p.color = android.graphics.Color.WHITE
-                        p.textSize = 28f
-                        p.textAlign = android.graphics.Paint.Align.CENTER
-                        p.isFakeBoldText = true
-                        val xPos = size / 2f
-                        val yPos = (size / 2f - (p.descent() + p.ascent()) / 2f)
-                        c.drawText(pin.line, xPos, yPos, p)
-                        style.addImage(imageId, b)
-                    }
-
-                    manager.create(SymbolOptions()
-                        .withLatLng(LatLng(pin.latitudeValue(), pin.longitudeValue()))
-                        .withIconImage(imageId)
-                        .withIconSize(1.0f)
-                        .withData(com.google.gson.JsonPrimitive("v_${pin.id}"))
-                    )
-                }
-            } catch (e: Exception) {
-                android.util.Log.e("MapScreen", "Error updating vehicle symbols", e)
-            }
-        }
-    }
-
-    // POI and Route Markers
-    LaunchedEffect(lat, lon, currentTripRoute, poiManager) {
-        poiManager?.let { manager ->
-            manager.deleteAll()
-            if (lat != null && lon != null && stopId == null) {
-                manager.create(SymbolOptions()
-                    .withLatLng(LatLng(lat, lon))
-                    .withIconImage("marker-15")
-                    .withIconColor("#007AFF")
-                    .withIconSize(1.5f)
-                )
-            }
-            if (currentTripRoute.isNotEmpty()) {
-                // Origin
-                manager.create(SymbolOptions()
-                    .withLatLng(currentTripRoute.first())
-                    .withIconImage("marker-15")
-                    .withIconColor("#4CAF50") // Green for start
-                    .withIconSize(1.2f)
-                )
-                // Destination
-                manager.create(SymbolOptions()
-                    .withLatLng(currentTripRoute.last())
-                    .withIconImage("marker-15")
-                    .withIconColor("#F44336") // Red for end
-                    .withIconSize(1.2f)
-                )
-            }
-        }
-    }
-
-    // Update stop symbols
-    LaunchedEffect(stops, stopManager) {
-        stopManager?.let { manager ->
-            try {
-                android.util.Log.d("MapScreen", "Updating stop symbols: ${stops.size}")
-                manager.deleteAll()
-                stops.forEach { stop ->
-                    val sLat = stop.latitudeValue()
-                    val sLon = stop.longitudeValue()
-                    if (sLat != null && sLon != null) {
-                        manager.create(SymbolOptions()
-                            .withLatLng(LatLng(sLat, sLon))
-                            .withIconImage("dot-11")
-                            .withIconColor("#FFFFFF")
-                            .withIconSize(1.5f)
-                            .withData(com.google.gson.JsonPrimitive("s_${stop.id}"))
-                        )
-                    }
-                }
-            } catch (e: Exception) { }
-        }
-    }
-
-    // Update route line (from vehicles or from connection search)
-    LaunchedEffect(routeStops, currentTripRoute, lineManager) {
-        lineManager?.let { manager ->
-            manager.deleteAll()
-            if (routeStops.isNotEmpty()) {
-                val points = routeStops.map { LatLng(it.latitudeValue(), it.longitudeValue()) }
-                manager.create(LineOptions()
-                    .withLatLngs(points)
-                    .withLineColor("#FFCC00")
-                    .withLineWidth(4f)
-                    .withLineOpacity(0.8f)
-                )
-            } else if (currentTripRoute.isNotEmpty()) {
-                manager.create(LineOptions()
-                    .withLatLngs(currentTripRoute)
-                    .withLineColor("#007AFF")
-                    .withLineWidth(6f)
-                    .withLineOpacity(0.8f)
-                )
-
-                // Zoom to fit route
-                if (currentTripRoute.size > 1) {
-                    val bounds = com.mapbox.mapboxsdk.geometry.LatLngBounds.Builder()
-                        .includes(currentTripRoute)
-                        .build()
-                    mapInstance?.animateCamera(
-                        com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLngBounds(bounds, 100)
-                    )
-                }
-            }
         }
     }
 
@@ -343,113 +227,172 @@ fun MapScreen(
     val backdrop = rememberLayerBackdrop(graphicsLayer)
 
     Box(modifier = Modifier.fillMaxSize()) {
-        val mapView = remember { MapView(context) }
 
-        DisposableEffect(mapView) {
-            mapView.onCreate(null)
-            mapView.onStart()
-            mapView.onResume()
-            onDispose {
-                mapView.onPause()
-                mapView.onStop()
-                mapView.onDestroy()
-            }
-        }
-
-        AndroidView(
-            factory = {
-                mapView.apply {
-                    getMapAsync { mapboxMap ->
-                        mapInstance = mapboxMap
-                        val styleUrl = "https://tiles.openfreemap.org/styles/bright"
-                        mapboxMap.setStyle(styleUrl) { style ->
-                            // Add essential icons to style if missing
-                            fun createCircleBitmap(size: Int, color: Int, strokeColor: Int = android.graphics.Color.BLACK): android.graphics.Bitmap {
-                                val b = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888)
-                                val c = android.graphics.Canvas(b)
-                                val p = android.graphics.Paint()
-                                p.isAntiAlias = true
-                                p.color = color
-                                p.style = android.graphics.Paint.Style.FILL
-                                c.drawCircle(size/2f, size/2f, size/2f - 2f, p)
-                                p.color = strokeColor
-                                p.style = android.graphics.Paint.Style.STROKE
-                                p.strokeWidth = 2f
-                                c.drawCircle(size/2f, size/2f, size/2f - 2f, p)
-                                return b
-                            }
-
-                            style.addImage("v_green", createCircleBitmap(44, android.graphics.Color.parseColor("#4CAF50")))
-                            style.addImage("v_yellow", createCircleBitmap(44, android.graphics.Color.parseColor("#FFCC00")))
-                            style.addImage("v_red", createCircleBitmap(44, android.graphics.Color.parseColor("#F44336")))
-                            style.addImage("marker-15", createCircleBitmap(32, android.graphics.Color.RED))
-                            style.addImage("dot-11", createCircleBitmap(16, android.graphics.Color.WHITE))
-
-                            vehicleManager = SymbolManager(this, mapboxMap, style).apply {
-                                iconAllowOverlap = true
-                                textAllowOverlap = true
-                                addClickListener { symbol ->
-                                    val data = symbol.data?.asString
-                                    if (data?.startsWith("v_") == true) {
-                                        val vehicleId = data.removePrefix("v_")
-                                        pins.find { it.id == vehicleId }?.let { viewModel.selectVehicle(it) }
-                                    }
-                                    true
-                                }
-                            }
-                            stopManager = SymbolManager(this, mapboxMap, style).apply {
-                                iconAllowOverlap = true
-                                addClickListener { symbol ->
-                                    val data = symbol.data?.asString
-                                    if (data?.startsWith("s_") == true) {
-                                        val foundStopId = data.removePrefix("s_")
-                                        stops.find { it.id == foundStopId }?.let { viewModel.selectStop(it) }
-                                    }
-                                    true
-                                }
-                            }
-                            poiManager = SymbolManager(this, mapboxMap, style)
-                            lineManager = LineManager(this, mapboxMap, style)
-
-                            mapboxMap.addOnMapClickListener {
-                                viewModel.deselectAll()
-                                true
-                            }
-
-                            try {
-                                val locationComponent = mapboxMap.locationComponent
-                                locationComponent.activateLocationComponent(
-                                    com.mapbox.mapboxsdk.location.LocationComponentActivationOptions.builder(context, style).build()
-                                )
-                                locationComponent.isLocationComponentEnabled = true
-                                locationComponent.renderMode = com.mapbox.mapboxsdk.location.modes.RenderMode.COMPASS
-                            } catch (e: Exception) { }
-                        }
-                        val target = if (lat != null && lon != null) {
-                            LatLng(lat, lon)
-                        } else if (userLocationState != null) {
-                            userLocationState!!
-                        } else {
-                            LatLng(51.0509, 13.7373)
-                        }
-
-                        mapboxMap.cameraPosition = CameraPosition.Builder()
-                            .target(target)
-                            .zoom(if (lat != null || userLocationState != null) 15.0 else 13.0)
-                            .build()
-                    }
-                }
-            },
-            modifier = Modifier.fillMaxSize()
-        )
-
-        // Backdrop-Quelle über der Karte
-        Box(
+        MaplibreMap(
             modifier = Modifier
                 .fillMaxSize()
-                .layerBackdrop(backdrop)
-                .background(Color(0xFF0A0F1E).copy(alpha = 0.45f))
-        )
+                .layerBackdrop(backdrop),
+            baseStyle = BaseStyle.Uri("https://tiles.openfreemap.org/styles/bright"),
+            cameraState = mapCameraState,
+            options = MapOptions(
+                renderOptions = RenderOptions(renderMode = RenderOptions.RenderMode.TextureView)
+            )
+        ) {
+            // ── Vehicle layer ──────────────────────────────────────────────
+            val vehicleSource = rememberGeoJsonSource(remember(pins) {
+                val featuresJson = pins.joinToString(",") { pin ->
+                    val lon = pin.longitudeValue()
+                    val lat = pin.latitudeValue()
+                    """{"type":"Feature","geometry":{"type":"Point","coordinates":[$lon,$lat]},"properties":{"id":${JsonPrimitive(pin.id)},"line":${JsonPrimitive(pin.line)},"punctuality":${pin.punctuality ?: 0}}}"""
+                }
+                GeoJsonData.JsonString("""{"type":"FeatureCollection","features":[$featuresJson]}""")
+            })
+
+            CircleLayer(
+                id = "vehicle-circles",
+                source = vehicleSource,
+                radius = const(18.dp),
+                color = switch(
+                    condition(
+                        test = feature["punctuality"].asNumber() lt const(0f),
+                        output = const(Color(0xFF4CAF50))
+                    ),
+                    condition(
+                        test = feature["punctuality"].asNumber() gt const(0f),
+                        output = const(Color(0xFFF44336))
+                    ),
+                    fallback = const(Color(0xFFFFCC00))
+                ),
+                strokeColor = const(Color.White),
+                strokeWidth = const(2.dp),
+                onClick = { features ->
+                    val id = features.firstOrNull()?.properties?.get("id")?.jsonPrimitive?.content
+                    val pin = pins.find { it.id == id }
+                    if (pin != null) { viewModel.selectVehicle(pin); ClickResult.Consume }
+                    else ClickResult.Pass
+                }
+            )
+
+            SymbolLayer(
+                id = "vehicle-labels",
+                source = vehicleSource,
+                textField = format(span(feature["line"].asString())),
+                textColor = const(Color.White),
+                textSize = const(12.sp),
+                textAllowOverlap = const(true),
+                iconAllowOverlap = const(true)
+            )
+
+            // ── Stop layer ─────────────────────────────────────────────────
+            val stopSource = rememberGeoJsonSource(remember(stops) {
+                val featuresJson = stops.mapNotNull { stop ->
+                    val sLat = stop.latitudeValue() ?: return@mapNotNull null
+                    val sLon = stop.longitudeValue() ?: return@mapNotNull null
+                    """{"type":"Feature","geometry":{"type":"Point","coordinates":[$sLon,$sLat]},"properties":{"id":${JsonPrimitive(stop.id)}}}"""
+                }.joinToString(",")
+                GeoJsonData.JsonString("""{"type":"FeatureCollection","features":[$featuresJson]}""")
+            })
+
+            CircleLayer(
+                id = "stop-circles",
+                source = stopSource,
+                radius = const(6.dp),
+                color = const(Color.White),
+                strokeColor = const(Color(0xFF333333)),
+                strokeWidth = const(1.5.dp),
+                onClick = { features ->
+                    val id = features.firstOrNull()?.properties?.get("id")?.jsonPrimitive?.content
+                    val stop = stops.find { it.id == id }
+                    if (stop != null) { viewModel.selectStop(stop); ClickResult.Consume }
+                    else ClickResult.Pass
+                }
+            )
+
+            // ── Route line ─────────────────────────────────────────────────
+            val isVehicleRoute = routeStops.isNotEmpty()
+            val routeCoordinates = remember(routeStops, currentTripRoute) {
+                when {
+                    routeStops.isNotEmpty() -> routeStops.mapNotNull { stop ->
+                        val rLat = stop.latitudeValue() ?: return@mapNotNull null
+                        val rLon = stop.longitudeValue() ?: return@mapNotNull null
+                        Position(rLon, rLat)
+                    }
+                    currentTripRoute.isNotEmpty() ->
+                        currentTripRoute.map { Position(it.longitude, it.latitude) }
+                    else -> emptyList()
+                }
+            }
+            val routeSource = rememberGeoJsonSource(remember(routeCoordinates) {
+                if (routeCoordinates.size >= 2) {
+                    val coords = routeCoordinates.joinToString(",") { "[${it.longitude},${it.latitude}]" }
+                    GeoJsonData.JsonString("""{"type":"FeatureCollection","features":[{"type":"Feature","geometry":{"type":"LineString","coordinates":[$coords]},"properties":{}}]}""")
+                } else {
+                    GeoJsonData.JsonString("""{"type":"FeatureCollection","features":[]}""")
+                }
+            })
+
+            LineLayer(
+                id = "route-line",
+                source = routeSource,
+                color = if (isVehicleRoute) const(Color(0xFFFFCC00)) else const(Color(0xFF007AFF)),
+                width = if (isVehicleRoute) const(4.dp) else const(6.dp),
+                opacity = const(0.8f),
+                visible = routeCoordinates.size >= 2
+            )
+
+            // ── POI markers ────────────────────────────────────────────────
+            val poiSource = rememberGeoJsonSource(remember(lat, lon, currentTripRoute) {
+                val featuresList = mutableListOf<String>()
+                if (lat != null && lon != null && stopId == null) {
+                    featuresList += """{"type":"Feature","geometry":{"type":"Point","coordinates":[$lon,$lat]},"properties":{"type":"poi"}}"""
+                }
+                if (currentTripRoute.size >= 2) {
+                    val start = currentTripRoute.first()
+                    val end = currentTripRoute.last()
+                    featuresList += """{"type":"Feature","geometry":{"type":"Point","coordinates":[${start.longitude},${start.latitude}]},"properties":{"type":"start"}}"""
+                    featuresList += """{"type":"Feature","geometry":{"type":"Point","coordinates":[${end.longitude},${end.latitude}]},"properties":{"type":"end"}}"""
+                }
+                GeoJsonData.JsonString("""{"type":"FeatureCollection","features":[${featuresList.joinToString(",")}]}""")
+            })
+
+            CircleLayer(
+                id = "poi-circles",
+                source = poiSource,
+                radius = const(10.dp),
+                color = switch(
+                    condition(
+                        test = feature["type"].asString() eq const("start"),
+                        output = const(Color(0xFF4CAF50))
+                    ),
+                    condition(
+                        test = feature["type"].asString() eq const("end"),
+                        output = const(Color(0xFFF44336))
+                    ),
+                    fallback = const(Color(0xFF007AFF))
+                ),
+                strokeColor = const(Color.White),
+                strokeWidth = const(2.dp),
+                visible = (lat != null && lon != null && stopId == null) || currentTripRoute.size >= 2
+            )
+
+            // ── User location dot ──────────────────────────────────────────
+            val userLocSource = rememberGeoJsonSource(remember(userLocationState) {
+                val loc = userLocationState
+                if (loc != null) {
+                    GeoJsonData.JsonString("""{"type":"FeatureCollection","features":[{"type":"Feature","geometry":{"type":"Point","coordinates":[${loc.longitude},${loc.latitude}]},"properties":{}}]}""")
+                } else {
+                    GeoJsonData.JsonString("""{"type":"FeatureCollection","features":[]}""")
+                }
+            })
+            CircleLayer(
+                id = "user-location-dot",
+                source = userLocSource,
+                radius = const(8.dp),
+                color = const(Color(0xFF007AFF)),
+                strokeColor = const(Color.White),
+                strokeWidth = const(2.dp)
+            )
+        }
 
         CompositionLocalProvider(LocalGlassBackdrop provides backdrop) {
 
@@ -465,12 +408,11 @@ fun MapScreen(
         IconButton(
             onClick = {
                 viewModel.refreshLocation(context)
-                val target = userLocationState ?: LatLng(51.0509, 13.7373)
-                mapInstance?.animateCamera(
-                    com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLngZoom(
-                        target, 15.0
-                    )
-                )
+                val targetPos = userLocationState?.let { Position(it.longitude, it.latitude) }
+                    ?: Position(13.7373, 51.0509)
+                coroutineScope.launch {
+                    mapCameraState.animateTo(MapCameraPosition(target = targetPos, zoom = 15.0))
+                }
             },
             modifier = Modifier.padding(20.dp).statusBarsPadding().align(Alignment.TopEnd)
         ) {
@@ -512,11 +454,11 @@ fun MapScreen(
                 modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(16.dp).navigationBarsPadding()
             ) {
                 RouteDetailSheet(stops = routeStops, line = selectedVehicle?.line, onStopClick = { stop ->
-                    mapInstance?.animateCamera(
-                        com.mapbox.mapboxsdk.camera.CameraUpdateFactory.newLatLngZoom(
-                            LatLng(stop.latitudeValue(), stop.longitudeValue()), 15.0
-                        )
-                    )
+                    val sLat = stop.latitudeValue() ?: return@RouteDetailSheet
+                    val sLon = stop.longitudeValue() ?: return@RouteDetailSheet
+                    coroutineScope.launch {
+                        mapCameraState.animateTo(MapCameraPosition(target = Position(sLon, sLat), zoom = 15.0))
+                    }
                 })
                 IconButton(
                     onClick = { viewModel.deselectAll() },

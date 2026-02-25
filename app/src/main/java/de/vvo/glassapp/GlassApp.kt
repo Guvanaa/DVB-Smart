@@ -2,12 +2,12 @@ package de.vvo.glassapp
 
 import android.app.Application
 import de.vvo.glassapp.util.ServiceLocator
-import com.mapbox.mapboxsdk.Mapbox
+import org.maplibre.android.MapLibre
 
 class GlassApp : Application() {
     override fun onCreate() {
         super.onCreate()
-        Mapbox.getInstance(this)
+        MapLibre.getInstance(this)
         ServiceLocator.init(this)
     }
 }
