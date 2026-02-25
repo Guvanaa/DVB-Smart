@@ -105,13 +105,19 @@ class TransitViewModel(
         _userLocation.value = LatLng(lat, lon)
     }
 
+    // Only accept locations within Germany to avoid emulator default (California) being used
+    private fun isLocationInGermany(lat: Double, lon: Double): Boolean =
+        lat in 47.0..56.0 && lon in 5.0..16.0
+
     fun refreshLocation(context: android.content.Context) {
         try {
             val locationManager = context.getSystemService(android.content.Context.LOCATION_SERVICE) as android.location.LocationManager
 
             val listener = object : android.location.LocationListener {
                 override fun onLocationChanged(location: android.location.Location) {
-                    updateUserLocation(location.latitude, location.longitude)
+                    if (isLocationInGermany(location.latitude, location.longitude)) {
+                        updateUserLocation(location.latitude, location.longitude)
+                    }
                     locationManager.removeUpdates(this)
                 }
                 override fun onStatusChanged(p0: String?, p1: Int, p2: android.os.Bundle?) {}
@@ -129,12 +135,10 @@ class TransitViewModel(
             val location = locationManager.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
                 ?: locationManager.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
 
-            location?.let {
-                updateUserLocation(it.latitude, it.longitude)
-            } ?: run {
-                if (_userLocation.value == null) {
-                    updateUserLocation(51.0509, 13.7373)
-                }
+            if (location != null && isLocationInGermany(location.latitude, location.longitude)) {
+                updateUserLocation(location.latitude, location.longitude)
+            } else if (_userLocation.value == null) {
+                updateUserLocation(51.0509, 13.7373)
             }
         } catch (e: SecurityException) {
             if (_userLocation.value == null) {

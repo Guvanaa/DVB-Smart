@@ -119,16 +119,17 @@ fun MapScreen(
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.ACCESS_COARSE_LOCATION
         ))
-        // Try to get real location
+        // Try to get real location – only accept coordinates within Germany to avoid
+        // emulator default location (Shoreline Lake, California) being used
+        fun isInGermany(lat: Double, lon: Double) = lat in 47.0..56.0 && lon in 5.0..16.0
         try {
             val locationManager = context.getSystemService(android.content.Context.LOCATION_SERVICE) as android.location.LocationManager
             val location = locationManager.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
                 ?: locationManager.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
 
-            location?.let {
-                viewModel.updateUserLocation(it.latitude, it.longitude)
-            } ?: run {
-                // Fallback to center if no location found yet
+            if (location != null && isInGermany(location.latitude, location.longitude)) {
+                viewModel.updateUserLocation(location.latitude, location.longitude)
+            } else {
                 viewModel.updateUserLocation(51.0509, 13.7373)
             }
         } catch (e: SecurityException) {
