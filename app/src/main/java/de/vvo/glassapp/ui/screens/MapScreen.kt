@@ -6,6 +6,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -64,6 +65,9 @@ fun VehicleListSheet(
     onVehicleClick: (VehiclePin) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val isDark = isSystemInDarkTheme()
+    val contentColor = if (isDark) Color.White else Color(0xFF1C1C1E)
+    val secondaryColor = if (isDark) Color.White.copy(alpha = 0.6f) else Color(0xFF6E6E73)
     GlassCard(
         modifier = modifier
             .fillMaxWidth()
@@ -91,14 +95,15 @@ fun VehicleListSheet(
                         modifier = Modifier.background(statusColor, androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
                             .padding(horizontal = 8.dp, vertical = 4.dp)
                     ) {
+                        // Text auf farbigem Badge bleibt immer weiß
                         Text(pin.line, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                     }
                     Spacer(Modifier.width(12.dp))
                     Column {
-                        Text(pin.direction, color = Color.White, fontWeight = FontWeight.Medium, fontSize = 16.sp)
+                        Text(pin.direction, color = contentColor, fontWeight = FontWeight.Medium, fontSize = 16.sp)
                         val delay = pin.punctuality ?: 0
                         val delayText = if (delay > 0) "+$delay min" else if (delay < 0) "$delay min" else "Pünktlich"
-                        Text(delayText, color = if (delay > 0) Color(0xFFF44336) else if (delay < 0) Color(0xFF4CAF50) else Color.White.copy(alpha = 0.6f), fontSize = 12.sp)
+                        Text(delayText, color = if (delay > 0) Color(0xFFF44336) else if (delay < 0) Color(0xFF4CAF50) else secondaryColor, fontSize = 12.sp)
                     }
                 }
             }
@@ -118,6 +123,10 @@ fun MapScreen(
     val context = LocalContext.current
     val viewModel: TransitViewModel = viewModel(factory = TransitViewModel.Factory)
     val coroutineScope = rememberCoroutineScope()
+
+    val isDark = isSystemInDarkTheme()
+    val contentColor = if (isDark) Color.White else Color(0xFF1C1C1E)
+    val secondaryColor = if (isDark) Color.White.copy(alpha = 0.6f) else Color(0xFF6E6E73)
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -401,7 +410,7 @@ fun MapScreen(
             modifier = Modifier.padding(20.dp).statusBarsPadding().align(Alignment.TopStart)
         ) {
             GlassCard(modifier = Modifier.size(52.dp)) {
-                Icon(Icons.Default.ArrowBack, contentDescription = null, tint = Color.White)
+                Icon(Icons.Default.ArrowBack, contentDescription = null, tint = contentColor)
             }
         }
 
@@ -420,7 +429,7 @@ fun MapScreen(
                 Icon(
                     imageVector = Icons.Default.MyLocation,
                     contentDescription = "Locate Me",
-                    tint = Color.White
+                    tint = contentColor
                 )
             }
         }
@@ -431,12 +440,12 @@ fun MapScreen(
             ) {
                 GlassCard(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Verbindung", fontWeight = FontWeight.ExtraBold, color = Color.White, fontSize = 20.sp)
+                        Text("Verbindung", fontWeight = FontWeight.ExtraBold, color = contentColor, fontSize = 20.sp)
                         Spacer(Modifier.height(8.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.DirectionsWalk, contentDescription = null, tint = DvbYellow, modifier = Modifier.size(20.dp))
                             Spacer(Modifier.width(8.dp))
-                            Text("${selectedTrip!!.departureTime} - ${selectedTrip!!.arrivalTime}", color = Color.White, fontWeight = FontWeight.Bold)
+                            Text("${selectedTrip!!.departureTime} - ${selectedTrip!!.arrivalTime}", color = contentColor, fontWeight = FontWeight.Bold)
                             Spacer(Modifier.weight(1f))
                             Text("${selectedTrip!!.duration} min", color = DvbYellow, fontWeight = FontWeight.Bold)
                         }
@@ -446,7 +455,7 @@ fun MapScreen(
                     onClick = { viewModel.deselectAll() },
                     modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
                 ) {
-                    Text("✕", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                    Text("✕", color = secondaryColor, fontWeight = FontWeight.Bold, fontSize = 20.sp)
                 }
             }
         } else if (selectedVehicle != null) {
@@ -464,7 +473,7 @@ fun MapScreen(
                     onClick = { viewModel.deselectAll() },
                     modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
                 ) {
-                    Text("✕", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                    Text("✕", color = secondaryColor, fontWeight = FontWeight.Bold, fontSize = 20.sp)
                 }
             }
         } else if (selectedStop != null) {
@@ -476,7 +485,7 @@ fun MapScreen(
                     onClick = { viewModel.deselectAll() },
                     modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
                 ) {
-                    Text("✕", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                    Text("✕", color = secondaryColor, fontWeight = FontWeight.Bold, fontSize = 20.sp)
                 }
             }
         } else {
@@ -491,11 +500,11 @@ fun MapScreen(
                 ) {
                     Column(modifier = Modifier.padding(8.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(stringResource(R.string.live_traffic), fontWeight = FontWeight.ExtraBold, color = Color.White, fontSize = 18.sp)
+                            Text(stringResource(R.string.live_traffic), fontWeight = FontWeight.ExtraBold, color = contentColor, fontSize = 18.sp)
                             Spacer(Modifier.weight(1f))
-                            if (showVehicleList) Text("✕", color = Color.White.copy(alpha = 0.6f))
+                            if (showVehicleList) Text("✕", color = secondaryColor)
                         }
-                        Text(stringResource(R.string.vehicles_nearby, pins.size), color = Color.White.copy(alpha = 0.8f))
+                        Text(stringResource(R.string.vehicles_nearby, pins.size), color = secondaryColor)
                     }
                 }
 

@@ -9,6 +9,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -83,6 +84,13 @@ fun HomeScreen(navController: NavController) {
     val customOrigin by viewModel.customOrigin.collectAsState()
     val userLocation by viewModel.userLocation.collectAsState()
 
+    // Adaptive Farben für Light- und Darkmode
+    val isDark = isSystemInDarkTheme()
+    val contentColor = if (isDark) Color.White else Color(0xFF1C1C1E)
+    val secondaryColor = if (isDark) Color.White.copy(alpha = 0.6f) else Color(0xFF6E6E73)
+    val placeholderColor = if (isDark) Color.White.copy(alpha = 0.4f) else Color(0xFFAEAEB2)
+    val dividerColor = if (isDark) Color.White.copy(alpha = 0.1f) else Color.Black.copy(alpha = 0.08f)
+
     var showEditFavoriteDialog by remember { mutableStateOf<de.vvo.glassapp.ui.viewmodel.Favorite?>(null) }
     var favoriteNewName by remember { mutableStateOf("") }
     var isArrivalMode by remember { mutableStateOf(false) }
@@ -154,14 +162,14 @@ fun HomeScreen(navController: NavController) {
                         text = "DVB-Smart",
                         fontSize = 42.sp,
                         fontWeight = FontWeight.Black,
-                        color = Color.White,
+                        color = contentColor,
                         letterSpacing = (-1.5).sp
                     )
                     Text(
                         text = "Dein Weg durch Dresden.",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Medium,
-                        color = Color.White.copy(alpha = 0.7f)
+                        color = secondaryColor
                     )
                 }
 
@@ -171,10 +179,12 @@ fun HomeScreen(navController: NavController) {
                 Button(
                     onClick = { navController.navigate("proto") },
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.15f)),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isDark) Color.White.copy(alpha = 0.15f) else Color.Black.copy(alpha = 0.08f)
+                    ),
                     shape = RoundedCornerShape(14.dp)
                 ) {
-                    Text("🧪 Glass Prototyp", color = Color.White, fontWeight = FontWeight.Bold)
+                    Text("🧪 Glass Prototyp", color = contentColor, fontWeight = FontWeight.Bold)
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
@@ -188,7 +198,7 @@ fun HomeScreen(navController: NavController) {
                         text = stringResource(R.string.search_hint),
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = contentColor
                     )
                     val infiniteTransition = rememberInfiniteTransition()
                     val scale by infiniteTransition.animateFloat(
@@ -254,7 +264,7 @@ fun HomeScreen(navController: NavController) {
                             Spacer(modifier = Modifier.width(12.dp))
                             Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
                                 if (originQuery.isEmpty() && customOrigin == null) {
-                                    Text("Mein Standort (oder Start suchen...)", color = Color.White.copy(alpha = 0.4f), fontSize = 16.sp)
+                                    Text("Mein Standort (oder Start suchen...)", color = placeholderColor, fontSize = 16.sp)
                                 }
                                 BasicTextField(
                                     value = if (customOrigin != null && originQuery.isEmpty()) customOrigin!!.name else originQuery,
@@ -264,7 +274,7 @@ fun HomeScreen(navController: NavController) {
                                         if (it.isNotEmpty()) viewModel.searchStops(it)
                                     },
                                     textStyle = TextStyle(
-                                        color = if (customOrigin != null && originQuery.isEmpty()) DvbYellow else Color.White,
+                                        color = if (customOrigin != null && originQuery.isEmpty()) DvbYellow else contentColor,
                                         fontSize = 16.sp,
                                         fontWeight = if (customOrigin != null) FontWeight.Bold else FontWeight.Normal
                                     ),
@@ -277,12 +287,12 @@ fun HomeScreen(navController: NavController) {
                                     originQuery = ""
                                     isSearchingOrigin = false
                                 }, modifier = Modifier.size(24.dp)) {
-                                    Text("✕", color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp)
+                                    Text("✕", color = secondaryColor, fontSize = 12.sp)
                                 }
                             }
                         }
 
-                        Divider(modifier = Modifier.padding(vertical = 12.dp), color = Color.White.copy(alpha = 0.1f))
+                        Divider(modifier = Modifier.padding(vertical = 12.dp), color = dividerColor)
 
                         // Time Selection
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable {
@@ -293,7 +303,7 @@ fun HomeScreen(navController: NavController) {
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
                                 if (isArrivalMode) "Ankunft" else "Abfahrt",
-                                color = Color.White,
+                                color = contentColor,
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Medium
                             )
@@ -306,15 +316,15 @@ fun HomeScreen(navController: NavController) {
                             )
                         }
 
-                        Divider(modifier = Modifier.padding(vertical = 12.dp), color = Color.White.copy(alpha = 0.1f))
+                        Divider(modifier = Modifier.padding(vertical = 12.dp), color = dividerColor)
 
                         // Destination / Search
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Place, contentDescription = null, tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(20.dp))
+                            Icon(Icons.Default.Place, contentDescription = null, tint = secondaryColor, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(12.dp))
                             Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
                                 if (searchQuery.isEmpty()) {
-                                    Text("Ziel suchen...", color = Color.White.copy(alpha = 0.4f), fontSize = 16.sp)
+                                    Text("Ziel suchen...", color = placeholderColor, fontSize = 16.sp)
                                 }
                                 BasicTextField(
                                     value = searchQuery,
@@ -322,7 +332,7 @@ fun HomeScreen(navController: NavController) {
                                         searchQuery = it
                                         isSearchingOrigin = false
                                     },
-                                    textStyle = TextStyle(color = Color.White, fontSize = 16.sp),
+                                    textStyle = TextStyle(color = contentColor, fontSize = 16.sp),
                                     modifier = Modifier.fillMaxWidth(),
                                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                                     keyboardActions = KeyboardActions(onSearch = {
@@ -483,7 +493,7 @@ fun HomeScreen(navController: NavController) {
                 padding = 24.dp
             ) {
                 Column {
-                    Text("Reisezeit planen", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    Text("Reisezeit planen", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = contentColor)
                     Spacer(modifier = Modifier.height(24.dp))
 
                     Row(
@@ -494,21 +504,21 @@ fun HomeScreen(navController: NavController) {
                             onClick = { isArrivalMode = false },
                             modifier = Modifier.weight(1f),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = if (!isArrivalMode) DvbYellow else Color.White.copy(alpha = 0.1f)
+                                containerColor = if (!isArrivalMode) DvbYellow else if (isDark) Color.White.copy(alpha = 0.1f) else Color.Black.copy(alpha = 0.08f)
                             ),
                             shape = RoundedCornerShape(14.dp)
                         ) {
-                            Text("Abfahrt", color = if (!isArrivalMode) Color.Black else Color.White)
+                            Text("Abfahrt", color = if (!isArrivalMode) Color.Black else contentColor)
                         }
                         Button(
                             onClick = { isArrivalMode = true },
                             modifier = Modifier.weight(1f),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = if (isArrivalMode) DvbYellow else Color.White.copy(alpha = 0.1f)
+                                containerColor = if (isArrivalMode) DvbYellow else if (isDark) Color.White.copy(alpha = 0.1f) else Color.Black.copy(alpha = 0.08f)
                             ),
                             shape = RoundedCornerShape(14.dp)
                         ) {
-                            Text("Ankunft", color = if (isArrivalMode) Color.Black else Color.White)
+                            Text("Ankunft", color = if (isArrivalMode) Color.Black else contentColor)
                         }
                     }
 
@@ -517,13 +527,13 @@ fun HomeScreen(navController: NavController) {
                     OutlinedTextField(
                         value = timeInput,
                         onValueChange = { timeInput = it },
-                        label = { Text("Zeit (z.B. 14:30)", color = Color.White.copy(alpha = 0.6f)) },
+                        label = { Text("Zeit (z.B. 14:30)", color = secondaryColor) },
                         modifier = Modifier.fillMaxWidth(),
-                        textStyle = TextStyle(color = Color.White, fontSize = 18.sp),
+                        textStyle = TextStyle(color = contentColor, fontSize = 18.sp),
                         shape = RoundedCornerShape(16.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = DvbYellow,
-                            unfocusedBorderColor = Color.White.copy(alpha = 0.3f)
+                            unfocusedBorderColor = if (isDark) Color.White.copy(alpha = 0.3f) else Color.Black.copy(alpha = 0.2f)
                         )
                     )
 
@@ -553,7 +563,7 @@ fun HomeScreen(navController: NavController) {
                         },
                         modifier = Modifier.align(Alignment.CenterHorizontally)
                     ) {
-                        Text("Jetzt abfahren", color = Color.White.copy(alpha = 0.6f))
+                        Text("Jetzt abfahren", color = secondaryColor)
                     }
                 }
             }
@@ -632,11 +642,12 @@ fun HomeScreen(navController: NavController) {
 
 @Composable
 fun SectionHeader(title: String) {
+    val isDark = isSystemInDarkTheme()
     Text(
         text = title,
         fontSize = 22.sp,
         fontWeight = FontWeight.Bold,
-        color = Color.White,
+        color = if (isDark) Color.White else Color(0xFF1C1C1E),
         modifier = Modifier.padding(bottom = 14.dp, top = 8.dp)
     )
 }
@@ -650,6 +661,9 @@ fun GlassSearchResultItem(
     onFavoriteClick: (() -> Unit)? = null,
     onClick: () -> Unit
 ) {
+    val isDark = isSystemInDarkTheme()
+    val contentColor = if (isDark) Color.White else Color(0xFF1C1C1E)
+    val secondaryColor = if (isDark) Color.White.copy(alpha = 0.7f) else Color(0xFF6E6E73)
     GlassCard(
         modifier = Modifier
             .fillMaxWidth()
@@ -669,15 +683,15 @@ fun GlassSearchResultItem(
                 modifier = Modifier.size(24.dp).padding(end = 12.dp)
             )
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = title, fontWeight = FontWeight.Bold, color = Color.White)
-                Text(text = subtitle, fontSize = 13.sp, color = Color.White.copy(alpha = 0.7f))
+                Text(text = title, fontWeight = FontWeight.Bold, color = contentColor)
+                Text(text = subtitle, fontSize = 13.sp, color = secondaryColor)
             }
             if (onFavoriteClick != null) {
                 IconButton(onClick = onFavoriteClick) {
                     Icon(
                         imageVector = if (isFavorite) Icons.Filled.Star else Icons.Outlined.Star,
                         contentDescription = "Favorite",
-                        tint = if (isFavorite) DvbYellow else Color.White.copy(alpha = 0.5f)
+                        tint = if (isFavorite) DvbYellow else if (isDark) Color.White.copy(alpha = 0.5f) else Color.Gray
                     )
                 }
             }
@@ -692,6 +706,7 @@ fun FavoriteItem(
     onClick: () -> Unit,
     onLongClick: () -> Unit
 ) {
+    val isDark = isSystemInDarkTheme()
     GlassCard(
         modifier = Modifier
             .width(100.dp)
@@ -718,7 +733,7 @@ fun FavoriteItem(
                     else -> Icons.Filled.Star
                 }
                 Surface(
-                    color = Color.White.copy(alpha = 0.25f),
+                    color = if (isDark) Color.White.copy(alpha = 0.25f) else Color.Black.copy(alpha = 0.08f),
                     shape = CircleShape,
                     modifier = Modifier.size(40.dp)
                 ) {
@@ -736,7 +751,7 @@ fun FavoriteItem(
                     text = favorite.name,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.ExtraBold,
-                    color = Color.White,
+                    color = if (isDark) Color.White else Color(0xFF1C1C1E),
                     maxLines = 1,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
@@ -752,6 +767,9 @@ fun TripItem(
     onTripSelected: (de.vvo.glassapp.data.model.Trip) -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
+    val isDark = isSystemInDarkTheme()
+    val contentColor = if (isDark) Color.White else Color(0xFF1C1C1E)
+    val secondaryColor = if (isDark) Color.White.copy(alpha = 0.7f) else Color(0xFF6E6E73)
     GlassCard(
         modifier = Modifier
             .fillMaxWidth()
@@ -770,8 +788,8 @@ fun TripItem(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
-                    Text(text = "${trip.departureTime} - ${trip.arrivalTime}", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 17.sp)
-                    Text(text = "Dauer: ${trip.duration} min", fontSize = 13.sp, color = Color.White.copy(alpha = 0.7f))
+                    Text(text = "${trip.departureTime} - ${trip.arrivalTime}", fontWeight = FontWeight.Bold, color = contentColor, fontSize = 17.sp)
+                    Text(text = "Dauer: ${trip.duration} min", fontSize = 13.sp, color = secondaryColor)
                 }
                 Text(text = if (trip.interchanges == 0) "Direkt" else "${trip.interchanges} Umstiege", fontSize = 13.sp, color = DvbYellow, fontWeight = FontWeight.Bold)
             }
@@ -813,18 +831,18 @@ fun TripItem(
                              Icon(
                                 Icons.Default.DirectionsWalk,
                                 contentDescription = null,
-                                tint = Color.White.copy(alpha = 0.5f),
+                                tint = secondaryColor,
                                 modifier = Modifier.size(14.dp).padding(end = 2.dp)
                              )
                              Text(
                                 "${section.duration ?: 0}m",
-                                color = Color.White.copy(alpha = 0.5f),
+                                color = secondaryColor,
                                 fontSize = 10.sp,
                                 modifier = Modifier.padding(end = 4.dp)
                              )
                         }
                         if (index < trip.sections.size - 1) {
-                            Text(">", color = Color.White.copy(alpha = 0.3f), fontSize = 10.sp, modifier = Modifier.padding(end = 4.dp))
+                            Text(">", color = if (isDark) Color.White.copy(alpha = 0.3f) else Color.Black.copy(alpha = 0.3f), fontSize = 10.sp, modifier = Modifier.padding(end = 4.dp))
                         }
                     }
                 }

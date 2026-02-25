@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.DirectionsRailway
 import androidx.compose.material.icons.filled.Tram
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -34,6 +35,9 @@ fun VehicleListSheet(
     onVehicleClick: (VehiclePin) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val isDark = isSystemInDarkTheme()
+    val contentColor = if (isDark) Color.White else Color(0xFF1C1C1E)
+    val secondaryColor = if (isDark) Color.White.copy(alpha = 0.6f) else Color(0xFF6E6E73)
     GlassCard(
         modifier = modifier
             .fillMaxWidth()
@@ -65,10 +69,10 @@ fun VehicleListSheet(
                     }
                     Spacer(Modifier.width(12.dp))
                     Column {
-                        Text(pin.direction, color = Color.White, fontWeight = FontWeight.Medium, fontSize = 16.sp)
+                        Text(pin.direction, color = contentColor, fontWeight = FontWeight.Medium, fontSize = 16.sp)
                         val delay = pin.punctuality ?: 0
                         val delayText = if (delay > 0) "+$delay min" else if (delay < 0) "$delay min" else "pünktlich"
-                        Text(delayText, color = if (delay > 0) Color(0xFFF44336) else if (delay < 0) Color(0xFF4CAF50) else Color.White.copy(alpha = 0.6f), fontSize = 12.sp)
+                        Text(delayText, color = if (delay > 0) Color(0xFFF44336) else if (delay < 0) Color(0xFF4CAF50) else secondaryColor, fontSize = 12.sp)
                     }
                 }
             }
@@ -148,6 +152,7 @@ fun RouteDetailSheet(
     onStopClick: (StopPoint) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val isDark = isSystemInDarkTheme()
     GlassCard(
         modifier = modifier.fillMaxWidth().heightIn(max = 400.dp),
         shape = RoundedCornerShape(24.dp)
@@ -187,15 +192,15 @@ fun RouteDetailSheet(
                             Box(
                                 modifier = Modifier
                                     .size(14.dp)
-                                    .background(if (index == 0) DvbYellow else if (isFuture) Color.White else Color.White.copy(alpha = 0.3f), CircleShape)
-                                    .border(2.dp, Color.Black, CircleShape)
+                                    .background(if (index == 0) DvbYellow else if (isFuture) (if (isDark) Color.White else Color(0xFF444444)) else (if (isDark) Color.White.copy(alpha = 0.3f) else Color(0xFFCCCCCC)), CircleShape)
+                                    .border(2.dp, if (isDark) Color.Black else Color(0xFF888888), CircleShape)
                             )
                             if (index < stops.size - 1) {
                                 Box(
                                     modifier = Modifier
                                         .width(3.dp)
                                         .height(48.dp)
-                                        .background(if (isFuture) Color.White.copy(alpha = 0.6f) else Color.White.copy(alpha = 0.2f))
+                                        .background(if (isFuture) (if (isDark) Color.White.copy(alpha = 0.6f) else Color(0xFF444444).copy(alpha = 0.5f)) else (if (isDark) Color.White.copy(alpha = 0.2f) else Color(0xFFCCCCCC)))
                                 )
                             }
                         }

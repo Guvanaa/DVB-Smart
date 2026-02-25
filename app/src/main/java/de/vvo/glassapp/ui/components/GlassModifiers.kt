@@ -2,6 +2,7 @@ package de.vvo.glassapp.ui.components
 
 import android.os.Build
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -26,28 +27,29 @@ fun Modifier.glassEffect(
     padding: Dp? = null
 ): Modifier {
     val backdrop = LocalGlassBackdrop.current
+    val isDark = isSystemInDarkTheme()
     return if (backdrop != null) {
         this
             .drawBackdrop(
                 backdrop = backdrop,
                 shape = { shape },
                 effects = {
-                    blur(10f)
+                    blur(if (isDark) 10f else 16f)
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         vibrancy()
                         lens(refractionHeight = 50f, refractionAmount = 200f)
-                             //So tief geht Brechung ins Element //Stärke der Brechung
                     }
                 },
                 onDrawSurface = {
-                    drawRect(Color.White.copy(alpha = 0.10f))
+                    // Lightmode: stärkere weiße Oberfläche für Kontrast und Lesbarkeit
+                    drawRect(if (isDark) Color.White.copy(alpha = 0.10f) else Color.White.copy(alpha = 0.65f))
                 }
             )
             .padding(padding ?: 16.dp)
     } else {
         this
             .clip(shape)
-            .background(Color.Black.copy(alpha = 0.50f))
+            .background(if (isDark) Color.Black.copy(alpha = 0.50f) else Color.White.copy(alpha = 0.80f))
             .padding(padding ?: 16.dp)
     }
 }
