@@ -163,10 +163,10 @@ fun HomeScreen(navController: NavController) {
             CircleLayer(
                 id = "home-stop-dots",
                 source = stopSource,
-                radius = const(6.dp),
-                color = const(DvbYellow),
-                strokeColor = const(Color.White),
-                strokeWidth = const(1.5.dp)
+                radius = const(5.dp),
+                color = const(Color.White),
+                strokeColor = const(Color(0xFFB0BEC5)),
+                strokeWidth = const(2.dp)
             )
         }
 
