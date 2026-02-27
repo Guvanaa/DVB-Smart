@@ -77,14 +77,13 @@ class TransitRepository(
             val response = vvoApi.getMapPins(body)
             response.pins?.mapNotNull { pinStr ->
                 val parts = pinStr.split("|")
-                if (parts.size >= 5) {
+                if (parts.size >= 6) {
                     val id = parts[0]
-                    val place = parts[1]
-                    val name = parts[2]
-                    val right = parts[3].toDoubleOrNull() ?: 0.0
-                    val up = parts[4].toDoubleOrNull() ?: 0.0
+                    val name = parts[3]
+                    val up = parts[4].toDoubleOrNull() ?: 0.0   // northing
+                    val right = parts[5].toDoubleOrNull() ?: 0.0 // easting
                     val (lat, lon) = CoordinateUtils.gk4ToWgs84(right, up)
-                    Stop(id, name, place, lat, lon)
+                    Stop(id, name, null, lat, lon)
                 } else null
             } ?: emptyList()
         } catch (e: Exception) {

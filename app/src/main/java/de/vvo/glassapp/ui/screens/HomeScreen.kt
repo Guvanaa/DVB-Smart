@@ -55,10 +55,14 @@ import de.vvo.glassapp.data.model.Stop
 import de.vvo.glassapp.ui.components.*
 import org.maplibre.compose.camera.CameraPosition as MapCameraPosition
 import org.maplibre.compose.camera.rememberCameraState
+import org.maplibre.compose.expressions.dsl.*
+import org.maplibre.compose.layers.CircleLayer
 import org.maplibre.compose.map.GestureOptions
 import org.maplibre.compose.map.MapOptions
 import org.maplibre.compose.map.MaplibreMap
 import org.maplibre.compose.map.RenderOptions
+import org.maplibre.compose.sources.GeoJsonData
+import org.maplibre.compose.sources.rememberGeoJsonSource
 import org.maplibre.compose.style.BaseStyle
 import org.maplibre.spatialk.geojson.Position
 import de.vvo.glassapp.ui.theme.DvbYellow
@@ -83,6 +87,7 @@ fun HomeScreen(navController: NavController) {
     val favorites by viewModel.favorites.collectAsState()
     val customOrigin by viewModel.customOrigin.collectAsState()
     val userLocation by viewModel.userLocation.collectAsState()
+    val mapStops by viewModel.mapStops.collectAsState()
 
     // Adaptive Farben für Light- und Darkmode
     val isDark = isSystemInDarkTheme()
@@ -105,6 +110,8 @@ fun HomeScreen(navController: NavController) {
 
     LaunchedEffect(Unit) {
         viewModel.refreshLocation(context)
+        // Stops für Default-Dresden laden bevor Standort bekannt ist
+        viewModel.loadMapData(51.030, 13.690, 51.080, 13.800)
     }
 
     LaunchedEffect(searchQuery) {
@@ -122,11 +129,12 @@ fun HomeScreen(navController: NavController) {
     val backdrop = rememberLayerBackdrop(graphicsLayer)
 
     val mapCameraState = rememberCameraState(
-        firstPosition = MapCameraPosition(target = Position(13.7373, 51.0509), zoom = 14.0)
+        firstPosition = MapCameraPosition(target = Position(13.7373, 51.0509), zoom = 13.0)
     )
     LaunchedEffect(userLocation) {
         userLocation?.let { loc ->
-            mapCameraState.animateTo(MapCameraPosition(target = Position(loc.longitude, loc.latitude), zoom = 14.0))
+            mapCameraState.animateTo(MapCameraPosition(target = Position(loc.longitude, loc.latitude), zoom = 13.0))
+            viewModel.loadMapData(loc.latitude - 0.035, loc.longitude - 0.05, loc.latitude + 0.035, loc.longitude + 0.05)
         }
     }
 
@@ -136,13 +144,31 @@ fun HomeScreen(navController: NavController) {
             modifier = Modifier
                 .fillMaxSize()
                 .layerBackdrop(backdrop),
-            baseStyle = BaseStyle.Uri("https://tiles.openfreemap.org/styles/bright"),
+            baseStyle = BaseStyle.Uri("https://tiles.openfreemap.org/styles/positron"),
             cameraState = mapCameraState,
             options = MapOptions(
                 renderOptions = RenderOptions(renderMode = RenderOptions.RenderMode.TextureView),
                 gestureOptions = GestureOptions.AllDisabled
             )
-        )
+        ) {
+            val stopSource = rememberGeoJsonSource(remember(mapStops) {
+                val featuresJson = mapStops.mapNotNull { stop ->
+                    val sLat = stop.latitudeValue() ?: return@mapNotNull null
+                    val sLon = stop.longitudeValue() ?: return@mapNotNull null
+                    if (sLat == 0.0 && sLon == 0.0) return@mapNotNull null
+                    """{"type":"Feature","geometry":{"type":"Point","coordinates":[$sLon,$sLat]},"properties":{}}"""
+                }.joinToString(",")
+                GeoJsonData.JsonString("""{"type":"FeatureCollection","features":[$featuresJson]}""")
+            })
+            CircleLayer(
+                id = "home-stop-dots",
+                source = stopSource,
+                radius = const(6.dp),
+                color = const(DvbYellow),
+                strokeColor = const(Color.White),
+                strokeWidth = const(1.5.dp)
+            )
+        }
 
         // UI Overlay
         CompositionLocalProvider(LocalGlassBackdrop provides backdrop) {

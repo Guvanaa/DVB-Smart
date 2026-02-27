@@ -1,10 +1,12 @@
 package de.vvo.glassapp.ui.components
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.unit.dp
 
 import androidx.compose.foundation.clickable
@@ -20,11 +22,18 @@ fun GlassCard(
     onClick: (() -> Unit)? = null,
     content: @Composable BoxScope.() -> Unit
 ) {
+    val isDark = isSystemInDarkTheme()
+    val shadowedModifier = if (!isDark) {
+        modifier.shadow(elevation = 6.dp, shape = shape, clip = false)
+    } else {
+        modifier
+    }
+
     Box(
         modifier = if (onClick != null) {
-            modifier.clickable(onClick = onClick).glassEffect(shape = shape, padding = padding, borderWidth = borderWidth)
+            shadowedModifier.clickable(onClick = onClick).glassEffect(shape = shape, padding = padding, borderWidth = borderWidth)
         } else {
-            modifier.glassEffect(shape = shape, padding = padding, borderWidth = borderWidth)
+            shadowedModifier.glassEffect(shape = shape, padding = padding, borderWidth = borderWidth)
         }
     ) {
         content()

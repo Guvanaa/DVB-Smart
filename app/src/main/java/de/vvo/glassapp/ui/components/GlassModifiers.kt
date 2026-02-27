@@ -2,6 +2,7 @@ package de.vvo.glassapp.ui.components
 
 import android.os.Build
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,28 +29,30 @@ fun Modifier.glassEffect(
 ): Modifier {
     val backdrop = LocalGlassBackdrop.current
     val isDark = isSystemInDarkTheme()
+    val borderColor = if (isDark) Color.White.copy(alpha = 0.18f) else Color.Black.copy(alpha = 0.13f)
     return if (backdrop != null) {
         this
             .drawBackdrop(
                 backdrop = backdrop,
                 shape = { shape },
                 effects = {
-                    blur(if (isDark) 10f else 16f)
+                    blur(if (isDark) 10f else 20f)
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         vibrancy()
                         lens(refractionHeight = 50f, refractionAmount = 200f)
                     }
                 },
                 onDrawSurface = {
-                    // Lightmode: stärkere weiße Oberfläche für Kontrast und Lesbarkeit
-                    drawRect(if (isDark) Color.White.copy(alpha = 0.10f) else Color.White.copy(alpha = 0.65f))
+                    drawRect(if (isDark) Color.White.copy(alpha = 0.10f) else Color.White.copy(alpha = 0.82f))
                 }
             )
+            .border(width = borderWidth.dp, color = borderColor, shape = shape)
             .padding(padding ?: 16.dp)
     } else {
         this
+            .border(width = borderWidth.dp, color = borderColor, shape = shape)
             .clip(shape)
-            .background(if (isDark) Color.Black.copy(alpha = 0.50f) else Color.White.copy(alpha = 0.80f))
+            .background(if (isDark) Color.Black.copy(alpha = 0.50f) else Color.White.copy(alpha = 0.92f))
             .padding(padding ?: 16.dp)
     }
 }
