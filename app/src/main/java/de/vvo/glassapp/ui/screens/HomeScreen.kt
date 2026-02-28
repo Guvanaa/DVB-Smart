@@ -144,7 +144,7 @@ fun HomeScreen(navController: NavController) {
             modifier = Modifier
                 .fillMaxSize()
                 .layerBackdrop(backdrop),
-            baseStyle = BaseStyle.Uri("https://tiles.openfreemap.org/styles/positron"),
+            baseStyle = BaseStyle.Uri(if (isDark) "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json" else "https://tiles.openfreemap.org/styles/positron"),
             cameraState = mapCameraState,
             options = MapOptions(
                 renderOptions = RenderOptions(renderMode = RenderOptions.RenderMode.TextureView),
@@ -163,10 +163,10 @@ fun HomeScreen(navController: NavController) {
             CircleLayer(
                 id = "home-stop-dots",
                 source = stopSource,
-                radius = const(5.dp),
-                color = const(Color.White),
-                strokeColor = const(Color(0xFFB0BEC5)),
-                strokeWidth = const(2.dp)
+                radius = const(if (isDark) 3.5.dp else 5.dp),
+                color = const(if (isDark) Color.White.copy(alpha = 0.25f) else Color.White),
+                strokeColor = const(if (isDark) Color.White.copy(alpha = 0.12f) else Color(0xFFB0BEC5)),
+                strokeWidth = const(if (isDark) 1.dp else 2.dp)
             )
         }
 
@@ -485,19 +485,42 @@ fun HomeScreen(navController: NavController) {
 
             item {
                 Spacer(modifier = Modifier.height(32.dp))
-                Button(
-                    onClick = {
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        navController.navigate("map")
-                    },
+                GlassCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(64.dp)
                         .padding(bottom = 8.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = DvbYellow),
-                    shape = RoundedCornerShape(18.dp)
+                    shape = RoundedCornerShape(18.dp),
+                    borderWidth = 1.5f,
+                    surfaceColor = DvbYellow.copy(0.75f),
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        navController.navigate("map")
+                    }
                 ) {
-                    Text(stringResource(R.string.to_map), color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                Icons.Default.Map,
+                                contentDescription = null,
+                                tint = contentColor,
+                                modifier = Modifier.size(22.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                stringResource(R.string.to_map),
+                                color = contentColor,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 20.sp
+                            )
+                        }
+                    }
                 }
                 Spacer(modifier = Modifier.height(48.dp))
             }

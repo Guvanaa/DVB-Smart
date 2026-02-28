@@ -241,7 +241,7 @@ fun MapScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .layerBackdrop(backdrop),
-            baseStyle = BaseStyle.Uri("https://tiles.openfreemap.org/styles/bright"),
+            baseStyle = BaseStyle.Uri(if (isDark) "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json" else "https://tiles.openfreemap.org/styles/bright"),
             cameraState = mapCameraState,
             options = MapOptions(
                 renderOptions = RenderOptions(renderMode = RenderOptions.RenderMode.TextureView)

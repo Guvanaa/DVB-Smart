@@ -25,25 +25,30 @@ val LocalGlassBackdrop = staticCompositionLocalOf<LayerBackdrop?> { null }
 fun Modifier.glassEffect(
     shape: RoundedCornerShape = RoundedCornerShape(28.dp),
     borderWidth: Float = 1.2f,
-    padding: Dp? = null
+    padding: Dp? = null,
+    surfaceColor: Color? = null,
+    borderColor: Color? = null
 ): Modifier {
     val backdrop = LocalGlassBackdrop.current
     val isDark = isSystemInDarkTheme()
-    val borderColor = if (isDark) Color.White.copy(alpha = 0.18f) else Color.Black.copy(alpha = 0.13f)
+    val borderColor = borderColor ?: if (isDark) Color.White.copy(alpha = 0.22f) else Color.Black.copy(alpha = 0.13f)
+    val defaultSurface = if (isDark) Color.White.copy(alpha = 0.14f) else Color.White.copy(alpha = 0.82f)
+    val resolvedSurface = surfaceColor ?: defaultSurface
+    val fallbackBg = surfaceColor ?: if (isDark) Color(0xFF1C1C1E).copy(alpha = 0.85f) else Color.White.copy(alpha = 0.92f)
     return if (backdrop != null) {
         this
             .drawBackdrop(
                 backdrop = backdrop,
                 shape = { shape },
                 effects = {
-                    blur(if (isDark) 10f else 20f)
+                    blur(if (isDark) 18f else 20f)
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         vibrancy()
                         lens(refractionHeight = 50f, refractionAmount = 200f)
                     }
                 },
                 onDrawSurface = {
-                    drawRect(if (isDark) Color.White.copy(alpha = 0.10f) else Color.White.copy(alpha = 0.82f))
+                    drawRect(resolvedSurface)
                 }
             )
             .border(width = borderWidth.dp, color = borderColor, shape = shape)
@@ -52,7 +57,7 @@ fun Modifier.glassEffect(
         this
             .border(width = borderWidth.dp, color = borderColor, shape = shape)
             .clip(shape)
-            .background(if (isDark) Color.Black.copy(alpha = 0.50f) else Color.White.copy(alpha = 0.92f))
+            .background(fallbackBg)
             .padding(padding ?: 16.dp)
     }
 }
