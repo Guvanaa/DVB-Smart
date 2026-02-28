@@ -133,6 +133,25 @@ private fun buildStopStyle(initialGeoJson: String) = BaseStyle.Json("""
         "circle-stroke-color": "#ffffff",
         "circle-stroke-width": 2
       }
+    },
+    {
+      "id": "proto-stop-labels",
+      "type": "symbol",
+      "source": "stops-source",
+      "layout": {
+        "text-field": ["get", "name"],
+        "text-font": ["Noto Sans Regular"],
+        "text-size": 11,
+        "text-offset": [0, 1.2],
+        "text-anchor": "top",
+        "text-allow-overlap": false,
+        "text-ignore-placement": false
+      },
+      "paint": {
+        "text-color": "#CC0000",
+        "text-halo-color": "#ffffff",
+        "text-halo-width": 1.5
+      }
     }
   ]
 }
