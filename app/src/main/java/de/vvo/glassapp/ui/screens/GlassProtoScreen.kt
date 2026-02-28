@@ -1,13 +1,11 @@
 package de.vvo.glassapp.ui.screens
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,30 +18,27 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
-import de.vvo.glassapp.data.model.Stop
 import de.vvo.glassapp.ui.components.GlassCard
 import de.vvo.glassapp.ui.components.LocalGlassBackdrop
+import de.vvo.glassapp.ui.components.StopDetailSheet
 import de.vvo.glassapp.ui.viewmodel.TransitViewModel
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonPrimitive
 import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.camera.rememberCameraState
+import org.maplibre.compose.expressions.dsl.const
+import org.maplibre.compose.layers.CircleLayer
 import org.maplibre.compose.map.MapOptions
 import org.maplibre.compose.map.MaplibreMap
 import org.maplibre.compose.map.RenderOptions
 import org.maplibre.compose.sources.GeoJsonData
-import org.maplibre.compose.sources.GeoJsonSource
+import org.maplibre.compose.sources.rememberGeoJsonSource
 import org.maplibre.compose.style.BaseStyle
-import org.maplibre.compose.style.rememberStyleState
+import org.maplibre.compose.util.ClickResult
 import org.maplibre.spatialk.geojson.Position
 
-// Minimalistischer Style: graue Straßen + blaue OSM-Haltestellenpunkte + rote VVO-Stops
-// Nutzt OpenFreeMap-Vektorkacheln (OpenMapTiles Schema)
-// WICHTIG: stops-source und proto-stop-dots Layer sind im JSON definiert,
-// damit sie beim Style-Load existieren (bevor Compose-Layer hinzugefügt werden).
-// Hintergrund: maplibre-compose fügt Compose-Layer via onEndChanges() hinzu,
-// BEVOR DisposableEffect (SourceReferenceEffect) die Source hinzufügt → Layer schlägt fehl.
-// Lösung: Source + Layer direkt im Base-Style JSON definieren.
-private fun buildStopStyle(initialGeoJson: String) = BaseStyle.Json("""
+// Basemap style: minimalist roads + blue OSM transit stops (no VVO source here – managed via compose layers below)
+private val BASE_STYLE = BaseStyle.Json("""
 {
   "version": 8,
   "glyphs": "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
@@ -51,10 +46,6 @@ private fun buildStopStyle(initialGeoJson: String) = BaseStyle.Json("""
     "omtiles": {
       "type": "vector",
       "url": "https://tiles.openfreemap.org/planet"
-    },
-    "stops-source": {
-      "type": "geojson",
-      "data": $initialGeoJson
     }
   },
   "layers": [
@@ -117,40 +108,10 @@ private fun buildStopStyle(initialGeoJson: String) = BaseStyle.Json("""
       "source-layer": "poi",
       "filter": ["in", "class", "bus", "railway"],
       "paint": {
-        "circle-radius": 6,
+        "circle-radius": 4,
         "circle-color": "#1976D2",
         "circle-stroke-color": "#ffffff",
-        "circle-stroke-width": 2
-      }
-    },
-    {
-      "id": "proto-stop-dots",
-      "type": "circle",
-      "source": "stops-source",
-      "paint": {
-        "circle-radius": 10,
-        "circle-color": "#FF0000",
-        "circle-stroke-color": "#ffffff",
-        "circle-stroke-width": 2
-      }
-    },
-    {
-      "id": "proto-stop-labels",
-      "type": "symbol",
-      "source": "stops-source",
-      "layout": {
-        "text-field": ["get", "name"],
-        "text-font": ["Noto Sans Regular"],
-        "text-size": 11,
-        "text-offset": [0, 1.2],
-        "text-anchor": "top",
-        "text-allow-overlap": false,
-        "text-ignore-placement": false
-      },
-      "paint": {
-        "text-color": "#CC0000",
-        "text-halo-color": "#ffffff",
-        "text-halo-width": 1.5
+        "circle-stroke-width": 1.5
       }
     }
   ]
@@ -160,10 +121,17 @@ private fun buildStopStyle(initialGeoJson: String) = BaseStyle.Json("""
 @Composable
 fun GlassProtoScreen(navController: NavController) {
     val viewModel: TransitViewModel = viewModel(factory = TransitViewModel.Factory)
-    val mapStops by viewModel.mapStops.collectAsState()
-    var selectedStop by remember { mutableStateOf<Stop?>(null) }
+    val osmStops by viewModel.overpassStops.collectAsState()
+    val vvoStops by viewModel.mapStops.collectAsState()
+    val departures by viewModel.departures.collectAsState()
+    val selectedStop by viewModel.selectedStop.collectAsState()
+
+    // Primary: OSM via Overpass (accurate WGS84). Fallback: VVO MapPins with improved GK4 math.
+    val displayStops = if (osmStops.isNotEmpty()) osmStops else vvoStops
 
     LaunchedEffect(Unit) {
+        viewModel.loadOverpassStops(51.020, 13.660, 51.090, 13.830)
+        // Also trigger VVO MapPins as fallback (used when Overpass is unavailable)
         viewModel.loadMapData(51.030, 13.690, 51.080, 13.800)
     }
 
@@ -179,48 +147,55 @@ fun GlassProtoScreen(navController: NavController) {
         )
     )
 
-    // Use StyleState to update the base style source with VVO stop data
-    val styleState = rememberStyleState()
-
-    // Compute GeoJSON when stops are loaded and push to native source
-    LaunchedEffect(mapStops, styleState.sources) {
-        val source = styleState.sources["stops-source"] as? GeoJsonSource ?: return@LaunchedEffect
-        if (mapStops.isEmpty()) return@LaunchedEffect
-        val featuresJson = mapStops.mapNotNull { stop ->
-            val sLat = stop.latitudeValue() ?: return@mapNotNull null
-            val sLon = stop.longitudeValue() ?: return@mapNotNull null
-            if (sLat == 0.0 && sLon == 0.0) return@mapNotNull null
-            val idJson = JsonPrimitive(stop.id)
-            val nameJson = JsonPrimitive(stop.name)
-            """{"type":"Feature","geometry":{"type":"Point","coordinates":[$sLon,$sLat]},"properties":{"id":$idJson,"name":$nameJson}}"""
-        }.joinToString(",")
-        source.setData(GeoJsonData.JsonString("""{"type":"FeatureCollection","features":[$featuresJson]}"""))
-    }
-
-    // Initial style has one test dot at Dresden Neustadt to verify rendering.
-    // Once mapStops loads, LaunchedEffect above updates the source with real data.
-    val baseStyle = remember {
-        buildStopStyle("""{"type":"FeatureCollection","features":[{"type":"Feature","geometry":{"type":"Point","coordinates":[13.7373,51.0509]},"properties":{"id":"init","name":"INIT"}}]}""")
-    }
-
     Box(modifier = Modifier.fillMaxSize()) {
+
         MaplibreMap(
             modifier = Modifier
                 .fillMaxSize()
                 .layerBackdrop(backdrop),
-            baseStyle = baseStyle,
-            styleState = styleState,
+            baseStyle = BASE_STYLE,
             cameraState = cameraState,
             options = MapOptions(
-                renderOptions = RenderOptions(
-                    renderMode = RenderOptions.RenderMode.TextureView
-                )
+                renderOptions = RenderOptions(renderMode = RenderOptions.RenderMode.TextureView)
             )
-        )
+        ) {
+            // ── Stop dots from Overpass / OSM (WGS84, no coordinate conversion) ──
+            val stopSource = rememberGeoJsonSource(remember(displayStops) {
+                val featuresJson = displayStops.mapNotNull { stop ->
+                    val sLat = stop.latitudeValue() ?: return@mapNotNull null
+                    val sLon = stop.longitudeValue() ?: return@mapNotNull null
+                    if (sLat == 0.0 && sLon == 0.0) return@mapNotNull null
+                    val idJson   = JsonPrimitive(stop.id)
+                    val nameJson = JsonPrimitive(stop.name)
+                    """{"type":"Feature","geometry":{"type":"Point","coordinates":[$sLon,$sLat]},"properties":{"id":$idJson,"name":$nameJson}}"""
+                }.joinToString(",")
+                GeoJsonData.JsonString("""{"type":"FeatureCollection","features":[$featuresJson]}""")
+            })
+
+            CircleLayer(
+                id = "proto-stop-dots",
+                source = stopSource,
+                radius = const(9.dp),
+                color = const(Color(0xFFFF3B30)),
+                strokeColor = const(Color.White),
+                strokeWidth = const(2.dp),
+                onClick = { features ->
+                    val id   = features.firstOrNull()?.properties?.get("id")?.jsonPrimitive?.content
+                    val stop = displayStops.find { it.id == id }
+                    if (stop != null) {
+                        // selectOsmStop resolves the VVO numeric ID via name search
+                        viewModel.selectOsmStop(stop)
+                        ClickResult.Consume
+                    } else {
+                        ClickResult.Pass
+                    }
+                }
+            )
+        }
 
         CompositionLocalProvider(LocalGlassBackdrop provides backdrop) {
 
-            // Back-Button oben links
+            // Back button
             IconButton(
                 onClick = { navController.popBackStack() },
                 modifier = Modifier
@@ -233,7 +208,7 @@ fun GlassProtoScreen(navController: NavController) {
                 }
             }
 
-            // Stop-Info-Panel unten
+            // Stop detail sheet (departures) when a stop is selected
             selectedStop?.let { stop ->
                 Box(
                     modifier = Modifier
@@ -242,38 +217,9 @@ fun GlassProtoScreen(navController: NavController) {
                         .padding(16.dp)
                         .navigationBarsPadding()
                 ) {
-                    GlassCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(24.dp),
-                        padding = 16.dp
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = stop.name,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White,
-                                    fontSize = 18.sp
-                                )
-                                stop.place?.let {
-                                    Text(
-                                        text = it,
-                                        color = Color.White.copy(alpha = 0.7f),
-                                        fontSize = 14.sp
-                                    )
-                                }
-                            }
-                            TextButton(onClick = { navController.navigate("map/${stop.id}") }) {
-                                Text("Karte →", color = Color.White, fontWeight = FontWeight.Bold)
-                            }
-                        }
-                    }
+                    StopDetailSheet(stop = stop, departures = departures)
                     IconButton(
-                        onClick = { selectedStop = null },
+                        onClick = { viewModel.deselectAll() },
                         modifier = Modifier.align(Alignment.TopEnd)
                     ) {
                         Text("✕", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)

@@ -36,7 +36,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = "home") {
+    NavHost(navController = navController, startDestination = "proto") {
         composable("home") { HomeScreen(navController) }
         composable("proto") { GlassProtoScreen(navController) }
         composable("assistant") { AssistantScreen(navController) }

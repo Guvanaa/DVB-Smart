@@ -1,6 +1,7 @@
 package de.vvo.glassapp.util
 
 import android.content.Context
+import de.vvo.glassapp.data.api.OverpassApi
 import de.vvo.glassapp.data.api.PhotonApi
 import de.vvo.glassapp.data.api.VvoApi
 import de.vvo.glassapp.data.repository.FavoritesManager
@@ -44,8 +45,15 @@ object ServiceLocator {
         .addConverterFactory(GsonConverterFactory.create())
         .build()
 
+    private val overpassRetrofit = Retrofit.Builder()
+        .baseUrl("https://overpass-api.de/")
+        .client(client)
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+
     private val vvoApi = vvoRetrofit.create(VvoApi::class.java)
     private val photonApi = photonRetrofit.create(PhotonApi::class.java)
+    private val overpassApi = overpassRetrofit.create(OverpassApi::class.java)
 
-    val repository = TransitRepository(vvoApi, photonApi)
+    val repository = TransitRepository(vvoApi, photonApi, overpassApi)
 }

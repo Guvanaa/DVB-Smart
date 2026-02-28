@@ -71,6 +71,9 @@ class TransitViewModel(
     private val _mapStops = MutableStateFlow<List<Stop>>(emptyList())
     val mapStops: StateFlow<List<Stop>> = _mapStops
 
+    private val _overpassStops = MutableStateFlow<List<Stop>>(emptyList())
+    val overpassStops: StateFlow<List<Stop>> = _overpassStops
+
     private val _selectedStop = MutableStateFlow<Stop?>(null)
     val selectedStop: StateFlow<Stop?> = _selectedStop
 
@@ -298,6 +301,42 @@ class TransitViewModel(
             } catch (e: Exception) {
                 Log.e(TAG, "Location search failed", e)
                 _locationResults.value = emptyList()
+            }
+        }
+    }
+
+    /**
+     * Selects an OSM-sourced stop (from Overpass) and loads departures.
+     * Since OSM IDs don't work with VVO /dm, we resolve the VVO numeric ID
+     * by doing a quick name search first.
+     */
+    fun selectOsmStop(stop: de.vvo.glassapp.data.model.Stop) {
+        _selectedStop.value = stop
+        _selectedVehicle.value = null
+        _departures.value = emptyList()
+        viewModelScope.launch {
+            try {
+                // VVO /dm requires numeric stopId → search by name to resolve it
+                val vvoResults = repository.searchStops(stop.name)
+                val vvoId = vvoResults.firstOrNull()?.id
+                if (vvoId != null) {
+                    _departures.value = repository.getDepartures(vvoId)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "OSM stop departure lookup failed", e)
+            }
+        }
+    }
+
+    fun loadOverpassStops(swLat: Double, swLon: Double, neLat: Double, neLon: Double) {
+        viewModelScope.launch {
+            try {
+                Log.d(TAG, "Loading Overpass stops for: SW($swLat,$swLon) NE($neLat,$neLon)")
+                val stops = repository.getOverpassStops(swLat, swLon, neLat, neLon)
+                _overpassStops.value = stops
+                Log.d(TAG, "Fetched ${stops.size} Overpass stops")
+            } catch (e: Exception) {
+                Log.e(TAG, "Overpass load failed", e)
             }
         }
     }

@@ -49,3 +49,11 @@ interface PhotonApi {
         @Query("bbox") bbox: String = "13.5,50.9,14.0,51.2"
     ): PhotonResponse
 }
+
+interface OverpassApi {
+    @FormUrlEncoded
+    @POST("api/interpreter")
+    suspend fun query(
+        @Field("data") overpassQuery: String
+    ): OverpassResponse
+}
