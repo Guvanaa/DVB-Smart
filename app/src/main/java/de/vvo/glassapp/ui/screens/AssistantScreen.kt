@@ -3,6 +3,8 @@ package de.vvo.glassapp.ui.screens
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.expandVertically
+import androidx.compose.animation.core.*
+import androidx.compose.ui.draw.blur
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -48,7 +50,33 @@ fun AssistantScreen(navController: NavController) {
         )
     )
 
+    // Animated background for Apple feeling
+    val infiniteTransition = rememberInfiniteTransition()
+    val bgOffset by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1000f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(20000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+
     Box(modifier = Modifier.fillMaxSize().background(backgroundBrush)) {
+        // Dynamic decorative blobs
+        Box(modifier = Modifier
+            .size(400.dp)
+            .offset(x = (-100).dp, y = bgOffset.dp / 10)
+            .background(Color(0xFFE573FF).copy(alpha = 0.15f), CircleShape)
+            .blur(80.dp)
+        )
+        Box(modifier = Modifier
+            .size(300.dp)
+            .align(Alignment.BottomEnd)
+            .offset(x = 100.dp, y = (-bgOffset).dp / 15)
+            .background(Color(0xFF007AFF).copy(alpha = 0.2f), CircleShape)
+            .blur(60.dp)
+        )
+
         val messages = viewModel.assistantMessages
         val isTyping = viewModel.isAssistantTyping
         val welcomeMessage = stringResource(R.string.assistant_welcome)
@@ -89,10 +117,8 @@ fun AssistantScreen(navController: NavController) {
                 }
                 Text(
                     text = stringResource(R.string.assistant_name),
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Black,
-                    color = Color.White,
-                    letterSpacing = (-1).sp
+                    style = MaterialTheme.typography.headlineLarge.copy(fontSize = 30.sp),
+                    color = Color.White
                 )
             }
 

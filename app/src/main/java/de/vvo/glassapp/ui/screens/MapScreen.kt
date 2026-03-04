@@ -359,11 +359,11 @@ fun MapScreen(
                                 p.isAntiAlias = true
                                 p.color = color
                                 p.style = android.graphics.Paint.Style.FILL
-                                c.drawCircle(size/2f, size/2f, size/2f - 2f, p)
-                                p.color = strokeColor
+                                c.drawCircle(size/2f, size/2f, size/2f - 3f, p)
+                                p.color = android.graphics.Color.WHITE
                                 p.style = android.graphics.Paint.Style.STROKE
-                                p.strokeWidth = 2f
-                                c.drawCircle(size/2f, size/2f, size/2f - 2f, p)
+                                p.strokeWidth = 3f
+                                c.drawCircle(size/2f, size/2f, size/2f - 3f, p)
                                 return b
                             }
 

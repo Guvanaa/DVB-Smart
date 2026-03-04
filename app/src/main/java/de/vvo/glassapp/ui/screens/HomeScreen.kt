@@ -18,9 +18,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.border
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.DirectionsWalk
@@ -166,15 +168,12 @@ fun HomeScreen(navController: NavController) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = "DVB-Smart",
-                        fontSize = 42.sp,
-                        fontWeight = FontWeight.Black,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        letterSpacing = (-1.5).sp
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = "Dein Weg durch Dresden.",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Medium,
+                    style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
                 }
@@ -216,22 +215,43 @@ fun HomeScreen(navController: NavController) {
                             navController.navigate("assistant")
                         },
                         modifier = Modifier.graphicsLayer(
-                        scaleX = scale * 1.25f,
-                        scaleY = scale * 1.25f,
+                            scaleX = scale * 1.2f,
+                            scaleY = scale * 1.2f,
                             translationY = offsetY
                         )
                     ) {
-                        GlassCard(
-                            modifier = Modifier.size(76.dp),
-                            shape = RoundedCornerShape(22.dp),
-                            borderWidth = 2.5f
+                        // Apple-style Siri Orb
+                        Box(
+                            modifier = Modifier
+                                .size(78.dp)
+                                .background(
+                                    Brush.sweepGradient(
+                                        colors = listOf(
+                                            Color(0xFF00D1FF),
+                                            Color(0xFF92FE9D),
+                                            Color(0xFFE573FF),
+                                            Color(0xFF007AFF),
+                                            Color(0xFF00D1FF)
+                                        )
+                                    ),
+                                    CircleShape
+                                )
+                                .padding(2.dp)
                         ) {
-                            Icon(
-                                Icons.Default.AutoAwesome,
-                                contentDescription = "AI Assistant",
-                                tint = DvbYellow,
-                                modifier = Modifier.size(44.dp)
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(Color.Black.copy(alpha = 0.2f), CircleShape)
+                                    .border(2.dp, Color.White.copy(alpha = 0.4f), CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    Icons.Default.AutoAwesome,
+                                    contentDescription = "AI Assistant",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(42.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -635,8 +655,7 @@ fun HomeScreen(navController: NavController) {
 fun SectionHeader(title: String) {
     Text(
         text = title,
-        fontSize = 22.sp,
-        fontWeight = FontWeight.Bold,
+        style = MaterialTheme.typography.titleLarge,
         color = Color.White,
         modifier = Modifier.padding(bottom = 14.dp, top = 8.dp)
     )

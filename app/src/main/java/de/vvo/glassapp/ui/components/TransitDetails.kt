@@ -5,9 +5,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.border
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.DirectionsRailway
@@ -15,7 +18,7 @@ import androidx.compose.material.icons.filled.Tram
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -83,8 +86,8 @@ fun StopDetailSheet(
     modifier: Modifier = Modifier
 ) {
     GlassCard(
-        modifier = modifier.fillMaxWidth().heightIn(max = 400.dp),
-        shape = RoundedCornerShape(24.dp)
+        modifier = modifier.fillMaxWidth().heightIn(max = 450.dp),
+        shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp, bottomStart = 24.dp, bottomEnd = 24.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(stop.name, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onSurface)
@@ -149,8 +152,8 @@ fun RouteDetailSheet(
     modifier: Modifier = Modifier
 ) {
     GlassCard(
-        modifier = modifier.fillMaxWidth().heightIn(max = 400.dp),
-        shape = RoundedCornerShape(24.dp)
+        modifier = modifier.fillMaxWidth().heightIn(max = 450.dp),
+        shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp, bottomStart = 24.dp, bottomEnd = 24.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -184,18 +187,48 @@ fun RouteDetailSheet(
                             modifier = Modifier.width(32.dp)
                         ) {
                             val isFuture = stop.time != null // Simple heuristic
+
+                            // Pulse animation for current/first stop
+                            val infiniteTransition = androidx.compose.animation.core.rememberInfiniteTransition()
+                            val pulseScale by infiniteTransition.animateFloat(
+                                initialValue = 1f, targetValue = 1.3f,
+                                animationSpec = androidx.compose.animation.core.infiniteRepeatable(
+                                    animation = androidx.compose.animation.core.tween(1500),
+                                    repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
+                                )
+                            )
+
                             Box(
                                 modifier = Modifier
-                                    .size(14.dp)
-                                    .background(if (index == 0) DvbYellow else if (isFuture) Color.White else Color.White.copy(alpha = 0.3f), CircleShape)
-                                    .border(2.dp, Color.Black, CircleShape)
+                                    .size(16.dp)
+                                    .graphicsLayer {
+                                        if (index == 0) {
+                                            scaleX = pulseScale
+                                            scaleY = pulseScale
+                                        }
+                                    }
+                                    .background(
+                                        if (index == 0) DvbYellow
+                                        else if (isFuture) Color.White
+                                        else Color.White.copy(alpha = 0.3f),
+                                        CircleShape
+                                    )
+                                    .border(2.dp, Color.Black.copy(alpha = 0.5f), CircleShape)
                             )
                             if (index < stops.size - 1) {
                                 Box(
                                     modifier = Modifier
-                                        .width(3.dp)
-                                        .height(48.dp)
-                                        .background(if (isFuture) Color.White.copy(alpha = 0.6f) else Color.White.copy(alpha = 0.2f))
+                                        .width(4.dp)
+                                        .height(52.dp)
+                                        .background(
+                                            Brush.verticalGradient(
+                                                listOf(
+                                                    if (isFuture) Color.White.copy(alpha = 0.6f) else Color.White.copy(alpha = 0.2f),
+                                                    if (isFuture) Color.White.copy(alpha = 0.4f) else Color.White.copy(alpha = 0.1f)
+                                                )
+                                            ),
+                                            androidx.compose.foundation.shape.RoundedCornerShape(2.dp)
+                                        )
                                 )
                             }
                         }
